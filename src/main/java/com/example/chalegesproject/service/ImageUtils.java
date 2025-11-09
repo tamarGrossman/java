@@ -19,7 +19,7 @@ public class ImageUtils {
 //    }
 public static String getImage(String imagePath) {
     try {
-        Path path = Paths.get(imagePath);
+        Path path = Paths.get(UPLOAD_DIRECTORY+imagePath);
         byte[] bytes = Files.readAllBytes(path);
         return Base64.getEncoder().encodeToString(bytes);
     } catch (IOException e) {
