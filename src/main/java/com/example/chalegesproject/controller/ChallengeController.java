@@ -19,7 +19,7 @@ import java.net.URI;
 import java.util.List;
 import java.util.stream.Collectors;
 
-@CrossOrigin
+
     @RestController
     @RequestMapping("/api/challenges")
     public class ChallengeController {
@@ -38,7 +38,7 @@ import java.util.stream.Collectors;
         }
 
         // --- GET כל האתגרים ---
-        @GetMapping("/getChallenges")
+        @GetMapping("/getAll")
         public ResponseEntity<List<ChallengeDto>> getAllChallenges() {
             try {
                 // שולפים את כל האתגרים
@@ -61,7 +61,7 @@ import java.util.stream.Collectors;
         }
 
         // --- POST יצירת אתגר חדש ---
-        @PostMapping("/createChallenge")
+        @PostMapping("/create")
         public ResponseEntity<ChallengeDto> uploadChallengeWithImage(@RequestPart("image") MultipartFile file
                 ,@RequestPart("challenge") ChallengeDto c) {
             try {

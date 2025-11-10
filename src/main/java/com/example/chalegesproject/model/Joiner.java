@@ -22,6 +22,9 @@ public class Joiner {
     private LocalDate startDate;
     private LocalDateTime endDate;
 
+    public Joiner() {
+    }
+
     public Long getId() {
         return id;
     }

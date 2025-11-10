@@ -19,9 +19,9 @@ import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-@CrossOrigin
+
 @RestController
-@RequestMapping("/comment")
+@RequestMapping("/api/comment")
 public class CommentController   {
     private final CommentRepository commentRepository;
     private final UsersRepository usersRepository;
@@ -41,7 +41,7 @@ public class CommentController   {
     }
 
 
-    @GetMapping("/getComment")//כל התגובות-רשימה
+    @GetMapping("/getAll")//כל התגובות-רשימה
     public ResponseEntity<List<CommentDto>> getAllComments() {
         try {
         List<Comment> comments = commentRepository.findAll();
@@ -62,7 +62,7 @@ public class CommentController   {
 
     }
 
-    @PostMapping("/addComment")//הוספת תגובה
+    @PostMapping("/add")//הוספת תגובה
     public ResponseEntity<CommentDto> uploadCommentWithImage(@RequestPart("image") MultipartFile file
             ,@RequestPart("comment") CommentDto c) {
         try {

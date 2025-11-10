@@ -30,6 +30,10 @@ public class Users {
     @JsonIgnore
     private List<Comment> comments;
 
+
+    public Users() {
+    }
+
     public List<Comment> getComments() {
         return comments;
     }

@@ -8,9 +8,9 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 import java.util.Optional;
 
-@CrossOrigin
+
 @RestController
-@RequestMapping("/joiners")
+@RequestMapping("/api/joiners")
 public class JoinerController {
 
     private final JoinerRepository joinerRepository;
@@ -27,7 +27,7 @@ public class JoinerController {
     }
 
     // --- GET לפי ID ---
-    @GetMapping("/{id}")
+    @GetMapping("/get{id}")
     public Joiner getJoinerById(@PathVariable Long id) {
         Optional<Joiner> joiner = joinerRepository.findById(id);
         return joiner.orElse(null);

@@ -20,6 +20,10 @@ public class Comment {
     private String picture;
     private LocalDate date;//תאריך פרסום התגובה
 
+
+    public Comment() {
+    }
+
     public long getId() {
         return id;
     }

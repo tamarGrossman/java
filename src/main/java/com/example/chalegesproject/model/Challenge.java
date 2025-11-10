@@ -29,7 +29,8 @@ public class Challenge {
     private List<Comment> comments;
 
 
-
+    public Challenge() {
+    }
 
     public List<Joiner> getJoiners() {
         return joiners;

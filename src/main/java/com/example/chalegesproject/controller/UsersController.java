@@ -3,14 +3,17 @@ package com.example.chalegesproject.controller;
 import com.example.chalegesproject.model.Users;
 import com.example.chalegesproject.service.UsersRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.Optional;
 
-@CrossOrigin
+
 @RestController
-@RequestMapping("/users")
+@RequestMapping("/api/users")
 public class UsersController {
 
     private final UsersRepository usersRepository;
@@ -27,15 +30,21 @@ public class UsersController {
     }
 
     // --- GET לפי ID ---
-    @GetMapping("/{id}")
+    @GetMapping("/get{id}")
     public Users getUserById(@PathVariable Long id) {
         Optional<Users> user = usersRepository.findById(id);
         return user.orElse(null); // או לזרוק Exception מותאם אישית
     }
 
     // --- POST יצירת משתמש חדש ---
-    @PostMapping
-    public Users createUser(@RequestBody Users user) {
-        return usersRepository.save(user);
+    @PostMapping("/signup")
+    public ResponseEntity<Users> signUp(@RequestBody Users user){
+        //נבדוק ששם המשתמש לא קיים
+        Users u=usersRepository.findByUserName(user.getUsername());
+        if(u!=null)
+            return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+        String pass=user.getPassword();//הסיסמא שהמשתמש הכניס - לא מוצפנת
+        user.setPassword(new BCryptPasswordEncoder().encode(pass));
+        return new ResponseEntity<>(user,HttpStatus.CREATED);
     }
 }
