@@ -69,6 +69,7 @@ public class WebSecurityConfig {
                     .authorizeHttpRequests(auth ->
                                     auth.requestMatchers("/h2-console/**").permitAll()
                                             .requestMatchers("/api/**/**").permitAll()
+                                            .requestMatchers("/error").permitAll()
 
 //                  .requestMatchers("/api/user/signIn").permitAll()
                                             .anyRequest().authenticated()

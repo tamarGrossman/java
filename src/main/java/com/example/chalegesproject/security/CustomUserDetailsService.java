@@ -25,7 +25,7 @@ public class CustomUserDetailsService implements UserDetailsService {
     @Transactional
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
         //לאמת את המשתמש עם המשתמש שנמצא ב-DB
-        Users user=usersRepository.findByUserName(username);
+        Users user=usersRepository.findByUsername(username);
         if (user==null)
             throw new UsernameNotFoundException("user not found");
         //רשימה של הרשאות

@@ -1,6 +1,7 @@
 package com.example.chalegesproject.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 
 import java.time.LocalDate;
@@ -12,6 +13,7 @@ public class Challenge {
     @GeneratedValue
     private long id;
     @ManyToOne
+    @JsonIgnoreProperties("challenges") // מונע קפיצה חזרה ל־Users
     private Users user;
     private String name;
     private String description;

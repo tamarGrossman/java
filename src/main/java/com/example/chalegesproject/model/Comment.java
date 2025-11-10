@@ -1,5 +1,6 @@
 package com.example.chalegesproject.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.Id;
@@ -13,6 +14,8 @@ public class Comment {
     @GeneratedValue
     private long id;
     @ManyToOne
+    @JsonIgnoreProperties("challenges") // מונע קפיצה חזרה ל־Users
+
     private Users user;
     @ManyToOne
     private Challenge challenge;
