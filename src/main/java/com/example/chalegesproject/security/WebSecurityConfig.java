@@ -58,7 +58,7 @@ public class WebSecurityConfig {
             //משבית את הגנת CSRF על ידי הפעלת שיטת `csrf()` והשבתתה
             http.csrf(csrf -> csrf.disable()).cors(cors -> cors.configurationSource(request -> {
                         CorsConfiguration corsConfiguration = new CorsConfiguration();
-                        corsConfiguration.setAllowedOrigins(List.of("http://localhost:5173", "http://localhost:4200"));
+                        corsConfiguration.setAllowedOrigins(List.of("http://localhost:5173", "http://localhost:4200","http://localhost:65278"));
                         corsConfiguration.setAllowedMethods(List.of("*"));
                         corsConfiguration.setAllowedHeaders(List.of("*"));
                         corsConfiguration.setAllowCredentials(true);
@@ -68,7 +68,9 @@ public class WebSecurityConfig {
                     .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                     .authorizeHttpRequests(auth ->
                                     auth.requestMatchers("/h2-console/**").permitAll()
-                                            .requestMatchers("/api/**/**").permitAll()
+                                            .requestMatchers("/api/users/sign**").permitAll()
+                                            .requestMatchers("/api/challenges/**").permitAll()
+
                                             .requestMatchers("/error").permitAll()
 
 //                  .requestMatchers("/api/user/signIn").permitAll()
