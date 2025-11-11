@@ -4,11 +4,13 @@ import com.example.chalegesproject.model.Users;
 import com.example.chalegesproject.security.CustomUserDetails;
 import com.example.chalegesproject.security.jwt.JwtUtils;
 import com.example.chalegesproject.service.UsersRepository;
+import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.authentication.AnonymousAuthenticationToken;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -50,19 +52,57 @@ public class UsersController {
 
     // --- POST יצירת משתמש חדש ---
     @PostMapping("/signup")
-    public ResponseEntity<Users> signUp(@RequestBody Users user) {
-        //נבדוק ששם המשתמש לא קיים
+    public ResponseEntity<?> signUp(HttpServletRequest request, @RequestBody Users user) {
+
+        // 1. בדיקה האם המשתמש כבר מחובר (באמצעות Cookie JWT)
+        String jwt = jwtUtils.getJwtFromCookies(request);
+
+        if (jwt != null && jwtUtils.validateJwtToken(jwt)) {
+            // אם קיים JWT תקף, המשתמש כבר מחובר
+            String existingUsername = jwtUtils.getUserNameFromJwtToken(jwt);
+
+            // החזרת 403 Forbidden - כי המשתמש אינו מורשה לבצע רישום כשהוא מחובר
+            return ResponseEntity
+                    .status(HttpStatus.FORBIDDEN) // <--- תיקון: 403 Forbidden
+                    .body("שגיאה: את/ה כבר מחובר/ת כמשתמש " + existingUsername + ". יש להתנתק לפני רישום חדש.");
+        }
+
+        // 2. בדיקה האם שם המשתמש קיים במסד הנתונים
         Users u = usersRepository.findByUsername(user.getUsername());
-        if (u != null)
-            return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
-        String pass = user.getPassword();//הסיסמא שהמשתמש הכניס - לא מוצפנת
+        if (u != null) {
+            // החזרת 409 Conflict - כי יש קונפליקט עם משאב קיים
+            return ResponseEntity
+                    .status(HttpStatus.CONFLICT) // <--- תיקון: 409 Conflict
+                    .body("שגיאה: שם המשתמש " + user.getUsername() + " כבר קיים במערכת!");
+        }
+
+        // 3. הצפנה ושמירה
+        String pass = user.getPassword();
         user.setPassword(new BCryptPasswordEncoder().encode(pass));
         Users savedUser = usersRepository.save(user);
-        return new ResponseEntity<>(savedUser, HttpStatus.CREATED);
-    }
 
+        // החזרת שם המשתמש במקרה הצלחה
+        return ResponseEntity.status(HttpStatus.CREATED).body(savedUser.getUsername());
+    }
     @PostMapping("/signin")
     public ResponseEntity<?> signin(@RequestBody Users u) {
+
+        // 1. בדיקה אם המשתמש כבר מחובר
+        Authentication existingAuth = SecurityContextHolder.getContext().getAuthentication();
+
+        // בודק אם קיים אימות והוא לא אנונימי (כלומר, מישהו כבר מחובר)
+        if (existingAuth != null && existingAuth.isAuthenticated()
+                && !(existingAuth instanceof AnonymousAuthenticationToken)) {
+
+            // אם המשתמש המחובר כרגע הוא אותו משתמש שמנסה להתחבר שוב:
+            if (existingAuth.getName().equals(u.getUsername())) {
+                // מחזירים סטטוס 200 OK עם הודעת "כבר מחובר"
+                return ResponseEntity.ok()
+                        .body("אתה כבר מחובר כ-" + u.getUsername());
+            }
+        }
+
+        // 2. אם לא מחובר, ממשיכים בתהליך האימות הרגיל
         Authentication authentication = authenticationManager
                 .authenticate(new UsernamePasswordAuthenticationToken(u.getUsername(), u.getPassword()));
 

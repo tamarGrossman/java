@@ -1,12 +1,11 @@
 package com.example.chalegesproject.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.Id;
-import jakarta.persistence.OneToMany;
+import jakarta.persistence.*;
 
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 @Entity
 public class Users {
@@ -16,6 +15,16 @@ public class Users {
     private String username;
     private String email;
     private String password;
+    @ManyToMany
+    private Set<Role> roles=new HashSet<>();
+
+    public Set<Role> getRoles() {
+        return roles;
+    }
+
+    public void setRoles(Set<Role> roles) {
+        this.roles = roles;
+    }
 
     @JsonIgnore
     @OneToMany(mappedBy = "user")

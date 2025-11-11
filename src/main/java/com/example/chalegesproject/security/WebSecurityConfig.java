@@ -73,6 +73,7 @@ public class WebSecurityConfig {
 
                                             .requestMatchers("/error").permitAll()
 
+
 //                  .requestMatchers("/api/user/signIn").permitAll()
                                             .anyRequest().authenticated()
                     );
