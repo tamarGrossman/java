@@ -64,8 +64,8 @@ public class UsersController {
             // החזרת 403 Forbidden - כי המשתמש אינו מורשה לבצע רישום כשהוא מחובר
             return ResponseEntity
                     .status(HttpStatus.FORBIDDEN) // <--- תיקון: 403 Forbidden
-                    .body("שגיאה: את/ה כבר מחובר/ת כמשתמש " + existingUsername + ". יש להתנתק לפני רישום חדש.");
-        }
+                    .body(    existingUsername  +
+                            " שגיאה: את/ה כבר מחובר/ת כמשתמש    ");        }
 
         // 2. בדיקה האם שם המשתמש קיים במסד הנתונים
         Users u = usersRepository.findByUsername(user.getUsername());
