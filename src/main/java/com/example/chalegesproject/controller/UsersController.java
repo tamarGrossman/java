@@ -3,6 +3,7 @@ package com.example.chalegesproject.controller;
 import com.example.chalegesproject.model.Users;
 import com.example.chalegesproject.security.CustomUserDetails;
 import com.example.chalegesproject.security.jwt.JwtUtils;
+import com.example.chalegesproject.service.AIChatService;
 import com.example.chalegesproject.service.UsersRepository;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -29,12 +30,14 @@ public class UsersController {
     private UsersRepository usersRepository;
     private AuthenticationManager authenticationManager;
     private JwtUtils jwtUtils;
+    private AIChatService aiChatService;
 
     @Autowired
-    public UsersController(UsersRepository usersRepository, AuthenticationManager authenticationManager, JwtUtils jwtUtils) {
+    public UsersController(UsersRepository usersRepository, AuthenticationManager authenticationManager, JwtUtils jwtUtils, AIChatService aiChatService) {
         this.usersRepository = usersRepository;
         this.authenticationManager = authenticationManager;
         this.jwtUtils = jwtUtils;
+        this.aiChatService = aiChatService;
     }
 
     // --- GET כל המשתמשים ---
@@ -64,8 +67,9 @@ public class UsersController {
             // החזרת 403 Forbidden - כי המשתמש אינו מורשה לבצע רישום כשהוא מחובר
             return ResponseEntity
                     .status(HttpStatus.FORBIDDEN) // <--- תיקון: 403 Forbidden
-                    .body(    existingUsername  +
-                            " שגיאה: את/ה כבר מחובר/ת כמשתמש    ");        }
+                    .body(existingUsername +
+                            " שגיאה: את/ה כבר מחובר/ת כמשתמש    ");
+        }
 
         // 2. בדיקה האם שם המשתמש קיים במסד הנתונים
         Users u = usersRepository.findByUsername(user.getUsername());
@@ -84,6 +88,7 @@ public class UsersController {
         // החזרת שם המשתמש במקרה הצלחה
         return ResponseEntity.status(HttpStatus.CREATED).body(savedUser.getUsername());
     }
+
     @PostMapping("/signin")
     public ResponseEntity<?> signin(@RequestBody Users u) {
 
@@ -113,10 +118,15 @@ public class UsersController {
         return ResponseEntity.ok().header(HttpHeaders.SET_COOKIE, jwtCookie.toString())
                 .body(userDetails.getUsername());
     }
+
     @PostMapping("/signout")
     public ResponseEntity<?> signOut() {
         ResponseCookie cookie = jwtUtils.getCleanJwtCookie();
         return ResponseEntity.ok().header(HttpHeaders.SET_COOKIE, cookie.toString())
                 .body("you've been signed out! ");
+    }
+    @GetMapping("/chat")
+    public String getResponse(@RequestParam String promot) {
+        return aiChatService.getResponse(promot);
     }
 }

@@ -70,6 +70,8 @@ public class WebSecurityConfig {
                                     auth.requestMatchers("/h2-console/**").permitAll()
                                             .requestMatchers("/api/users/sign**").permitAll()
                                             .requestMatchers("/api/challenges/**").permitAll()
+                                            .requestMatchers("/api/users/chat**").permitAll()
+
 
                                             .requestMatchers("/error").permitAll()
 
