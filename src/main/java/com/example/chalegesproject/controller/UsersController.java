@@ -1,5 +1,6 @@
 package com.example.chalegesproject.controller;
 
+import com.example.chalegesproject.dto.ChatRequest;
 import com.example.chalegesproject.model.Users;
 import com.example.chalegesproject.security.CustomUserDetails;
 import com.example.chalegesproject.security.jwt.JwtUtils;
@@ -18,6 +19,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.web.bind.annotation.*;
+import reactor.core.publisher.Flux;
 
 import java.util.List;
 import java.util.Optional;
@@ -126,7 +128,7 @@ public class UsersController {
                 .body("you've been signed out! ");
     }
     @GetMapping("/chat")
-    public String getResponse(@RequestParam String promot) {
-        return aiChatService.getResponse(promot);
+    public String getResponse(@RequestBody ChatRequest chatRequest){
+        return aiChatService.getResponse(chatRequest.message(), chatRequest.conversationId());
     }
 }
