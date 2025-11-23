@@ -3,16 +3,13 @@ package com.example.chalegesproject.service;
 import com.example.chalegesproject.dto.ChallengeDto;
 import com.example.chalegesproject.model.Challenge;
 import com.example.chalegesproject.model.Users;
-import org.mapstruct.MapMapping;
-import org.mapstruct.Mapper;
-import org.mapstruct.Mapping;
+import org.mapstruct.*;
 
 import java.util.List;
 
 @Mapper(componentModel = "spring")
 public interface ChallengeMapper {
-
-    List<ChallengeDto> toChallengesDTO(List<Challenge> list);
+  List<ChallengeDto> toChallengesDTO(List<Challenge> list);
     // המרה עם טיפול בתמונה
     default ChallengeDto challengeToDto(Challenge challenge) {
         ChallengeDto dto = new ChallengeDto();
@@ -43,15 +40,15 @@ public interface ChallengeMapper {
         return dto;
     }
 
-//     ChallengeMapper.java (פונקציה challengeToDto)
 
 
-////    @Mapping(target="picture", source="imagePath")
-////    Challenge dtoToChallenge(ChallengeDto dto,Users user);
+
+//    @Mapping(target="picture", source="imagePath")
+//    Challenge dtoToChallenge(ChallengeDto dto,Users user);
 
 //     המרה הפוכה — שמירת התמונה שהועלתה
     @Mapping(target="picture", source="imagePath")
-     default Challenge dtoToChallenge(ChallengeDto dto,Users user) {
+     default Challenge dtoToChallenges(ChallengeDto dto,Users user) {
         Challenge challenge = new Challenge();
         challenge.setId(dto.getId());
         challenge.setName(dto.getName());
@@ -64,8 +61,11 @@ public interface ChallengeMapper {
 
         return challenge;
     }
-
-    // ChallengeMapper.java (פונקציה dtoToChallenge)
-
-
+    @Named("MinChallenge")
+    // ⬅️ *תוספת נדרשת:* מתודה יחידנית שממפה את ה-Challenge ל-DTO, תוך התעלמות משדה picture
+    @Mapping(target = "picture", ignore = true)
+    ChallengeDto challengeToMinDto(Challenge challenge);
+    @BeanMapping(qualifiedByName = "MinChallenge")
+    // ⬅️ *תוספת נדרשת:* מתודת רשימה שתשתמש במתודת המיפוי הקצרה
+    List<ChallengeDto> toChallengesMinDTO(List<Challenge> list);
 }
