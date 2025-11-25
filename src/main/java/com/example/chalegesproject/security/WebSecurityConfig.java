@@ -71,7 +71,7 @@ public class WebSecurityConfig {
                                             .requestMatchers("/api/users/sign**").permitAll()
                                             .requestMatchers("/api/challenges/**").permitAll()
                                             .requestMatchers("/api/users/chat**").permitAll()
-
+                                            .requestMatchers("/api/comment/**").permitAll()
 
                                             .requestMatchers("/error").permitAll()
 
