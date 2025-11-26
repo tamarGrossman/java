@@ -7,7 +7,9 @@ import com.example.chalegesproject.model.Comment;
 import com.example.chalegesproject.model.Users;
 import com.example.chalegesproject.service.*;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
@@ -121,10 +123,10 @@ public class CommentController   {
 // --- POST הוספת תגובה לאתגר (מאובטח באמצעות Token) ---
 
 @PreAuthorize("isAuthenticated()") // ⬅️ דורש טוקן מאומת
-@PostMapping("/add/{challengeId}") // ⬅️ הנתיב מקבל את ה-Challenge ID
+@PostMapping(value = "/add/{challengeId}", consumes = "multipart/form-data") // ⬅️ הנתיב מקבל את ה-Challenge ID
 public ResponseEntity<?> addComment(
         @PathVariable Long challengeId,
-        @RequestBody CommentDto commentDto) {
+        @RequestPart("commentData") CommentDto commentDto,@RequestPart("image") MultipartFile file) {
     try {
         // 1. קבלת שם המשתמש מתוך ה-Token
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
@@ -140,23 +142,12 @@ public ResponseEntity<?> addComment(
         Challenge challenge = challengeRepository.findById(challengeId)
                 .orElseThrow(() -> new NoSuchElementException("אתגר לא נמצא: ID " + challengeId));
 
-        // 4. יצירת אובייקט Comment והעתקת הערכים מה־DTO
-        Comment comment = new Comment();
-        comment.setUser(user);
-        comment.setChallenge(challenge);
-        comment.setContent(commentDto.getContent());
-        comment.setPicture(commentDto.getPicture());
-        comment.setDate(LocalDate.now()); // תאריך פרסום אוטומטי
+        commentDto.setImagePath(file.getOriginalFilename());//השם של התמונה
+        ImageUtils.saveImage(file);
 
-        // אם יש imagePath ב־DTO אפשר גם לשים אותו אם זה רלוונטי
-        if (commentDto.getImagePath() != null) {
-            comment.setPicture(commentDto.getImagePath());
-        }
+        Comment comment1=commentRepository.save(commentMapper.dtoToComment(commentDto,user,challenge));
 
-        // 5. שמירה ב-DB
-        commentRepository.save(comment);
-
-        return ResponseEntity.status(HttpStatus.CREATED).body("תגובה נשמרה בהצלחה!");
+        return ResponseEntity.status(HttpStatus.CREATED).build();
 
     } catch (NoSuchElementException e) {
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
@@ -175,3 +166,19 @@ public ResponseEntity<?> addComment(
 
 
 
+
+//        // 4. יצירת אובייקט Comment והעתקת הערכים מה־DTO
+//        Comment comment = new Comment();
+//        comment.setUser(user);
+//        comment.setChallenge(challenge);
+//        comment.setContent(commentDto.getContent());
+//        comment.setPicture(commentDto.getPicture());
+//        comment.setDate(LocalDate.now()); // תאריך פרסום אוטומטי
+
+// אם יש imagePath ב־DTO אפשר גם לשים אותו אם זה רלוונטי
+//        if (commentDto.getImagePath() != null) {
+//            comment.setPicture(commentDto.getImagePath());
+
+
+// 5. שמירה ב-DB
+//        commentRepository.save(comment);

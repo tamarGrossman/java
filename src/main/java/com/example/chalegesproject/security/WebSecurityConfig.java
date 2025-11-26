@@ -6,6 +6,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
 import org.springframework.security.config.Customizer;
@@ -71,8 +72,11 @@ public class WebSecurityConfig {
                                             .requestMatchers("/api/users/sign**").permitAll()
                                             .requestMatchers("/api/challenges/**").permitAll()
                                             .requestMatchers("/api/users/chat**").permitAll()
-                                            .requestMatchers("/api/comment/**").permitAll()
-
+//                                            .requestMatchers("/api/comment/**").permitAll()
+// 1. אפשר קריאות GET (כדי לקרוא תגובות קיימות)
+                                            .requestMatchers(HttpMethod.GET, "/api/comment/**").permitAll()
+                                            // 2. דרוש אימות עבור כל שינוי/POST
+                                            .requestMatchers("/api/comment/**").authenticated()
                                             .requestMatchers("/error").permitAll()
 
 
