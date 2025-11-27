@@ -72,7 +72,7 @@ public class WebSecurityConfig {
                                             .requestMatchers("/api/users/sign**").permitAll()
                                             .requestMatchers("/api/challenges/getAll").permitAll()
                                             .requestMatchers("/api/challenges/getById{id}").permitAll()
-                                            .requestMatchers("/api/users/chat**").permitAll()
+                                            .requestMatchers("/api/challenges/chat**").permitAll()
 //                                            .requestMatchers("/api/comment/**").permitAll()
 // 1. אפשר קריאות GET (כדי לקרוא תגובות קיימות)
                                             .requestMatchers(HttpMethod.GET, "/api/comment/**").permitAll()
