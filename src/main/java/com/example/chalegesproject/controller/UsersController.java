@@ -1,6 +1,7 @@
 package com.example.chalegesproject.controller;
 
 import com.example.chalegesproject.dto.ChatRequest;
+import com.example.chalegesproject.dto.ChatResponse;
 import com.example.chalegesproject.model.Users;
 import com.example.chalegesproject.security.CustomUserDetails;
 import com.example.chalegesproject.security.jwt.JwtUtils;
@@ -32,14 +33,12 @@ public class UsersController {
     private UsersRepository usersRepository;
     private AuthenticationManager authenticationManager;
     private JwtUtils jwtUtils;
-    private AIChatService aiChatService;
 
     @Autowired
-    public UsersController(UsersRepository usersRepository, AuthenticationManager authenticationManager, JwtUtils jwtUtils, AIChatService aiChatService) {
+    public UsersController(UsersRepository usersRepository, AuthenticationManager authenticationManager, JwtUtils jwtUtils) {
         this.usersRepository = usersRepository;
         this.authenticationManager = authenticationManager;
         this.jwtUtils = jwtUtils;
-        this.aiChatService = aiChatService;
     }
 
     // --- GET כל המשתמשים ---
@@ -127,8 +126,4 @@ public class UsersController {
         return ResponseEntity.ok().header(HttpHeaders.SET_COOKIE, cookie.toString())
                 .body("you've been signed out! ");
     }
-    @GetMapping("/chat")
-    public String getResponse(@RequestBody ChatRequest chatRequest){
-        return aiChatService.getResponse(chatRequest.message(), chatRequest.conversationId());
     }
-}

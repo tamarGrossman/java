@@ -70,13 +70,13 @@ public class WebSecurityConfig {
                     .authorizeHttpRequests(auth ->
                                     auth.requestMatchers("/h2-console/**").permitAll()
                                             .requestMatchers("/api/users/sign**").permitAll()
-                                            .requestMatchers("/api/challenges/**").permitAll()
+                                            .requestMatchers("/api/challenges/getAll").permitAll()
+                                            .requestMatchers("/api/challenges/getById{id}").permitAll()
                                             .requestMatchers("/api/users/chat**").permitAll()
 //                                            .requestMatchers("/api/comment/**").permitAll()
 // 1. אפשר קריאות GET (כדי לקרוא תגובות קיימות)
                                             .requestMatchers(HttpMethod.GET, "/api/comment/**").permitAll()
                                             // 2. דרוש אימות עבור כל שינוי/POST
-                                            .requestMatchers("/api/comment/**").authenticated()
                                             .requestMatchers("/error").permitAll()
 
 

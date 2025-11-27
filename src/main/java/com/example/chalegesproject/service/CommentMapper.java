@@ -31,6 +31,10 @@ public interface CommentMapper {
         if (comment.getUser() != null) {
             dto.setUsername(comment.getUser().getUsername());// <--- השורה החשובה
         }
+        // ⬅️ התיקון החשוב: מיפוי ה-Challenge ID
+        if (comment.getChallenge() != null) {
+            dto.setChallengeId(comment.getChallenge().getId()); // שולף את ה-ID מהאובייקט המקושר
+        }
         try {
             // המרת התמונה לקובץ base64 כדי שנוכל לשלוח ל-Frontend
             if (comment.getPicture() != null) {
@@ -44,23 +48,21 @@ public interface CommentMapper {
 
 
     // המרה הפוכה מ-DTO ל-Entity כולל שמירת תמונה
-        @Mapping(target="picture", source="imagePath")
-        default Comment dtoToComment(CommentDto dto, Users user, Challenge challenge) throws IOException {
+    @Mapping(target="picture", source="imagePath")
+    default Comment dtoToComment(CommentDto dto, Users user, Challenge challenge) throws IOException {
         Comment comment = new Comment();
 
         comment.setId(dto.getId());
         comment.setUser(user);
         comment.setChallenge(challenge);
         comment.setContent(dto.getContent());
-        comment.setDate(dto.getDate());
+        comment.setDate(java.time.LocalDate.now());
 
-        // שמירת התמונה שהגיעה מה-DTO
-        if (dto.getPicture() != null) {
+        if (dto.getImagePath() != null && !dto.getImagePath().isEmpty()) {
             comment.setPicture(dto.getImagePath());
-
         }
 
         return comment;
     }
-    }
+}
 

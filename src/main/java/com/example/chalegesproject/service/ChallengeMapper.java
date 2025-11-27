@@ -56,7 +56,6 @@ public interface ChallengeMapper {
         challenge.setDate(dto.getDate());
         challenge.setNumOfDays(dto.getNumOfDays());
         challenge.setUser(user);
-//        if (dto.getPicture() != null) {
             challenge.setPicture(dto.getImagePath());
 
         return challenge;

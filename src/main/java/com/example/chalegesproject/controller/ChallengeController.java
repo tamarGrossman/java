@@ -1,12 +1,15 @@
 package com.example.chalegesproject.controller;
 
 import com.example.chalegesproject.dto.ChallengeDto;
+import com.example.chalegesproject.dto.ChatRequest;
+import com.example.chalegesproject.dto.ChatResponse;
 import com.example.chalegesproject.model.Challenge;
 import com.example.chalegesproject.model.Joiner;
 import com.example.chalegesproject.model.Users;
 import com.example.chalegesproject.service.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
@@ -14,6 +17,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
+import reactor.core.publisher.Flux;
 
 import java.io.IOException;
 import java.net.URI;
@@ -32,15 +36,18 @@ import java.util.stream.Collectors;
         private final UsersRepository usersRepository;
         private final ChallengeMapper challengeMapper;
         private final JoinerRepository joinerRepository;
+        private final AIChatService aiChatService;
 
         @Autowired
         public ChallengeController(ChallengeRepository challengeRepository,
                                    UsersRepository usersRepository,
-                                   ChallengeMapper challengeMapper,JoinerRepository joinerRepository) {
+                                   ChallengeMapper challengeMapper,JoinerRepository joinerRepository,AIChatService aiChatService) {
             this.challengeRepository = challengeRepository;
             this.usersRepository = usersRepository;
             this.challengeMapper = challengeMapper;
             this.joinerRepository=joinerRepository;
+            this.aiChatService = aiChatService;
+
         }
 
         // --- GET כל האתגרים ---
@@ -97,7 +104,6 @@ import java.util.stream.Collectors;
 
 
         // --- POST יצירת אתגר חדש ---
-        @PreAuthorize("isAuthenticated()")
         @PostMapping("/create")
         public ResponseEntity<ChallengeDto> uploadChallengeWithImage(@RequestPart("image") MultipartFile file
                 ,@RequestPart("challenge") ChallengeDto c) {
@@ -132,7 +138,6 @@ import java.util.stream.Collectors;
 // ... (שאר הקוד של ChallengeController) ...
 
         // --- POST הצטרפות לאתגר (מאובטח באמצעות Token) ---
-        @PreAuthorize("isAuthenticated()") // ⬅️ דורש טוקן מאומת
         @PostMapping("/join/{challengeId}") // ⬅️ הנתיב מקבל רק את Challenge ID
         public ResponseEntity<?> joinChallenge(@PathVariable Long challengeId) {
             try {
@@ -201,7 +206,14 @@ import java.util.stream.Collectors;
                 return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
             }
         }
+        @PostMapping(value = "/chat", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
+        public Flux<ChatResponse> getResponseStream(@RequestBody ChatRequest chatRequest){
+
+            // ✅ עדכון 2: קריאה למתודה החדשה ב-Service
+            return aiChatService.getResponseStream(chatRequest.message(), chatRequest.conversationId());
         }
+    }
+
 
 
 

@@ -1,5 +1,6 @@
 package com.example.chalegesproject.service;
 
+import com.example.chalegesproject.dto.ChatResponse;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.memory.ChatMemory;
 import org.springframework.ai.chat.messages.AssistantMessage;
@@ -29,9 +30,8 @@ public class AIChatService {
     }
 
 
-
-    public String getResponse(String prompt,String conversationId){
-        List<Message> messageList=new ArrayList<>();
+    public Flux<ChatResponse> getResponseStream(String prompt, String conversationId){
+        List<org.springframework.ai.chat.messages.Message> messageList=new ArrayList<>();
         //ההודעה הראשונה - ההנחיה הראשונית
         messageList.add(new SystemMessage(SYSTEM_INSTRUCTION));
         //מוסיפים את כל ההודעות ששייכות לאותה השיחה
@@ -40,16 +40,26 @@ public class AIChatService {
         UserMessage userMessage=new UserMessage(prompt);
         messageList.add(userMessage);
 
-        String aiResponse=chatClient.prompt().messages(messageList)
-                .call().content();
+        Flux<String> aiResponseFlux = chatClient.prompt().messages(messageList)
+                .stream()
+                .content();
+        StringBuilder finalResponseBuilder = new StringBuilder();
 
         //שמירת התגובה בזכרון
         //התגובה של ה-AI
-        AssistantMessage aiMessage=new AssistantMessage(aiResponse);
+        return aiResponseFlux
+                .doOnNext(contentChunk -> finalResponseBuilder.append(contentChunk))
+                .map(ChatResponse::new)
+                .doOnComplete(() -> {
+                    String fullResponse = finalResponseBuilder.toString();
 
-        List<Message> messageList1=List.of(userMessage,aiMessage);
-        //מוסיפים לזכרון את השאלה והתשובה
-        chatMemory.add(conversationId,messageList1);
-        return aiResponse;
-    }
-}
+                    AssistantMessage aiMessage = new AssistantMessage(fullResponse);
+
+                    List<Message> messageListToSave =
+                            List.of(userMessage, aiMessage);
+
+                    chatMemory.add(conversationId, messageListToSave);
+
+                    System.out.println("Memory saved for conversation: " + conversationId);
+                });
+}}
