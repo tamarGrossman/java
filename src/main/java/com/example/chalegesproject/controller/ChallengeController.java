@@ -135,7 +135,6 @@ import java.util.stream.Collectors;
             }}
         // בתוך ChallengeController.java
 
-// ... (שאר הקוד של ChallengeController) ...
 
         // --- POST הצטרפות לאתגר (מאובטח באמצעות Token) ---
         @PostMapping("/join/{challengeId}") // ⬅️ הנתיב מקבל רק את Challenge ID
@@ -181,36 +180,85 @@ import java.util.stream.Collectors;
                 return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("שגיאה פנימית בשרת: " + e.getMessage());
             }
         }
-        @GetMapping("/userChallenges/{userId}")
-        public ResponseEntity<List<ChallengeDto>> getUserChallenges(@PathVariable Long userId) {
+        // --- GET שליפת כל האתגרים שמשתמש הצטרף אליהם ---
+        @GetMapping("/joinedChallenges")
+        public ResponseEntity<List<ChallengeDto>> getJoinedChallengesForUser() {
             try {
-                // 1. שליפת אובייקט המשתמש
-                Users user = usersRepository.findById(userId)
-                        .orElseThrow(() -> new Exception("משתמש לא נמצא"));
+                // 1. קבלת המשתמש המחובר מה־JWT
+                Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+                String username = authentication.getName();
 
-                // 2. שליפת רשומות ה-Joiner של המשתמש הזה
-                List<Joiner> joiners = joinerRepository.findByUser(user); // ⬅️ שימוש ב-JoinerRepository
+                // 2. שליפת אובייקט המשתמש
+                Users user = usersRepository.findByUsername(username);
+                if (user == null) {
+                    return new ResponseEntity<>(null, HttpStatus.UNAUTHORIZED);
+                }
 
-                // 3. מיפוי: ממיר את רשומות ה-Joiner לרשימת Challenge DTO מלאה
+                // 3. שליפת כל רשומות ה-Joiner של המשתמש
+                List<Joiner> joiners = joinerRepository.findByUser(user);
+
+                // 4. הוצאת כל ה-Challenge ששייכים לרשומות Joiner
                 List<Challenge> challenges = joiners.stream()
                         .map(Joiner::getChallenge)
                         .collect(Collectors.toList());
 
-                // 4. המרה ל-DTO מלאים (עם התמונה והפרטים המלאים)
+                // 5. המרת כל האתגרים ל-DTO
                 List<ChallengeDto> challengeDtos = challengeMapper.toChallengesDTO(challenges);
 
+                // 6. החזרה
                 return ResponseEntity.ok(challengeDtos);
 
             } catch (Exception e) {
-                System.out.println("Error fetching user challenges: " + e.getMessage());
-                return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
+                System.out.println("Error fetching joined challenges: " + e.getMessage());
+                return new ResponseEntity<>(null, HttpStatus.INTERNAL_SERVER_ERROR);
             }
         }
+
         @PostMapping(value = "/chat", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
         public Flux<ChatResponse> getResponseStream(@RequestBody ChatRequest chatRequest){
 
             // ✅ עדכון 2: קריאה למתודה החדשה ב-Service
             return aiChatService.getResponseStream(chatRequest.message(), chatRequest.conversationId());
+        }
+        // --- GET אתגרים שהמשתמש העלה (יצר בעצמו) ---
+        // בתוך ChallengeController.java
+
+        // --- GET אתגרים שהמשתמש המחובר יצר (העלה) ---
+        @GetMapping("/uploadedBy") // הנתיב לא כולל ID
+        public ResponseEntity<List<ChallengeDto>> getMyCreatedChallenges() {
+            try {
+                // 1. קבלת פרטי משתמש מחובר (בדיקה ש-Token קיים ותקין)
+                Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+                String username = authentication.getName(); // שם המשתמש מתוך ה-Token/JWT
+
+                // 2. מציאת אובייקט המשתמש (לפי שם משתמש שחולץ מה-JWT)
+                Users user = usersRepository.findByUsername(username);
+
+                // 3. בדיקת אבטחה קריטית: אם המשתמש לא נמצא (למרות שה-Token קיים)
+                if (user == null) {
+                    // זהו אירוע חריג (Token תקין אך משתמש נמחק) - מחזירים 401
+                    return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+                }
+
+                // 4. שליפת כל האתגרים שנוצרו על ידי המשתמש הזה
+                // (שימוש ב-challengeRepository.findByUser, כפי שהוספנו)
+                List<Challenge> createdChallenges = challengeRepository.findByUser(user);
+
+                // 5. המרה ל-DTO
+                List<ChallengeDto> challengeDtos = challengeMapper.toChallengesDTO(createdChallenges);
+
+                // 6. החזרת התוצאה
+                if (challengeDtos.isEmpty()) {
+                    // מחזיר 204 No Content אם המשתמש לא העלה כלום
+                    return ResponseEntity.noContent().build();
+                }
+
+                return ResponseEntity.ok(challengeDtos);
+
+            } catch (Exception e) {
+                System.out.println("Error fetching user's created challenges: " + e.getMessage());
+                return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+            }
         }
     }
 

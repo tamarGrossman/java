@@ -126,4 +126,31 @@ public class UsersController {
         return ResponseEntity.ok().header(HttpHeaders.SET_COOKIE, cookie.toString())
                 .body("you've been signed out! ");
     }
+    // בתוך המחלקה UsersController
+// ...
+// ...
+
+    // --- GET סטטוס משתמש מחובר (נדרש לאנגולר) ---
+    @GetMapping("/is-logged-in")
+    public ResponseEntity<Boolean> getCurrentUserStatus() {
+        // 1. קבלת אובייקט האימות מה-SecurityContext
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+
+        // 2. בדיקה האם המשתמש מאומת ואינו משתמש "אנונימי" (כלומר, מחובר)
+        boolean isAuthenticated = authentication != null &&
+                authentication.isAuthenticated() &&
+                !(authentication instanceof AnonymousAuthenticationToken);
+
+        // 3. החזרת true או false
+        return ResponseEntity.ok(isAuthenticated);
+
+        // אם היית רוצה להחזיר את שם המשתמש:
+    /*
+    if (isAuthenticated) {
+        return ResponseEntity.ok(authentication.getName());
+    } else {
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(null);
+    }
+    */
+    }
     }

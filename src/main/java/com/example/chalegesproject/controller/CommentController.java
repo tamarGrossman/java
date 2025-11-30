@@ -81,6 +81,7 @@ public ResponseEntity<?> addComment(
         System.out.println("Error adding comment: " + e.getMessage());
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("שגיאה פנימית בשרת: " + e.getMessage());
     }
+
 }
 
 
@@ -114,4 +115,41 @@ public ResponseEntity<List<CommentDto>> getCommentsByChallengeId(@PathVariable l
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
     }
 }
+// CommentController.java
+
+    // --- GET שליפת כל התגובות של משתמש ספציפי (מאובטח באמצעות Token/Cookie) ---
+
+    // CommentController.java
+
+    @GetMapping("/my-comments") // ✅ אין יותר {userId} בנתיב
+    public ResponseEntity<?> getMyComments() { // ✅ הפונקציה לא מקבלת פרמטרים מבחוץ
+        try {
+            // 1. קבלת המשתמש אך ורק מהעוגייה (SecurityContext)
+            Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+            String username = authentication.getName();
+
+            Users authenticatedUser = usersRepository.findByUsername(username);
+
+            if (authenticatedUser == null) {
+                return new ResponseEntity<>("User not authenticated.", HttpStatus.UNAUTHORIZED);
+            }
+
+            // 2. שימוש ב-ID של המשתמש שמצאנו מהעוגייה
+            Long realUserId = authenticatedUser.getId();
+
+            // 3. שליפת הנתונים
+            List<Comment> comments = commentRepository.findByUser_Id(realUserId);
+
+            // 4. המרה ל-DTO
+            List<CommentDto> commentDtos = commentMapper.toCommentesDTO(comments);
+
+            if (commentDtos.isEmpty()) {
+                return ResponseEntity.noContent().build();
+            }
+            return ResponseEntity.ok(commentDtos);
+
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error: " + e.getMessage());
+        }
+    }
     }
