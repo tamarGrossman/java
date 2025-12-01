@@ -22,6 +22,7 @@ public class Challenge {
     private LocalDate date;//תאריך העלאת האתגר
     private int numOfDays;//משך האתגר בימים
     private String picture;//הנתיב של התמונה
+    private String likedByUserIds = "";
 
     @OneToMany(mappedBy = "challenge")
     @JsonIgnore
@@ -34,6 +35,14 @@ public class Challenge {
 
 
     public Challenge() {
+    }
+
+    public String getLikedByUserIds() {
+        return likedByUserIds;
+    }
+
+    public void setLikedByUserIds(String likedByUserIds) {
+        this.likedByUserIds = likedByUserIds;
     }
 
     public List<Joiner> getJoiners() {
