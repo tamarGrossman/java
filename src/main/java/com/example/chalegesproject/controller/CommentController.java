@@ -48,11 +48,11 @@ public class CommentController   {
     }
 
 // --- POST הוספת תגובה לאתגר (מאובטח באמצעות Token) ---
-
-@PostMapping(value = "/add/{challengeId}", consumes = "multipart/form-data") // ⬅️ הנתיב מקבל את ה-Challenge ID
+@PostMapping(value = "/add/{challengeId}", consumes = "multipart/form-data")
 public ResponseEntity<?> addComment(
         @PathVariable Long challengeId,
-        @RequestPart("commentData") CommentDto commentDto,@RequestPart("image") MultipartFile file) {
+        @RequestPart("commentData") CommentDto commentDto,
+        @RequestPart(value = "image", required = false) MultipartFile file) { // required = false זה נכון!
     try {
         // 1. קבלת שם המשתמש מתוך ה-Token
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
@@ -68,10 +68,20 @@ public ResponseEntity<?> addComment(
         Challenge challenge = challengeRepository.findById(challengeId)
                 .orElseThrow(() -> new NoSuchElementException("אתגר לא נמצא: ID " + challengeId));
 
-        commentDto.setImagePath(file.getOriginalFilename());//השם של התמונה
-        ImageUtils.saveImage(file);
+        // ❌❌❌ שתי השורות הבאות הוסרו מכאן ❌❌❌
+        // commentDto.setImagePath(file.getOriginalFilename());
+        // ImageUtils.saveImage(file);
 
-        Comment comment1=commentRepository.save(commentMapper.dtoToComment(commentDto,user,challenge));
+        // ⭐⭐ בלוק הבדיקה נשאר והוא היחיד שאחראי על הטיפול בקובץ ⭐⭐
+        if (file != null && !file.isEmpty()) {
+            commentDto.setImagePath(file.getOriginalFilename()); // השם של התמונה
+            ImageUtils.saveImage(file);
+        } else {
+            // אם אין תמונה, מגדירים את הנתיב ל-null
+            commentDto.setImagePath(null);
+        }
+
+        Comment comment1 = commentRepository.save(commentMapper.dtoToComment(commentDto, user, challenge));
 
         return ResponseEntity.status(HttpStatus.CREATED).build();
 
@@ -81,17 +91,7 @@ public ResponseEntity<?> addComment(
         System.out.println("Error adding comment: " + e.getMessage());
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("שגיאה פנימית בשרת: " + e.getMessage());
     }
-
 }
-
-
-
-
-
-
-
-
-
 
 
 @GetMapping("/getByChallenge/{challengeId}") // הכתובת תהיה למשל: /getAll/getByChallenge/5

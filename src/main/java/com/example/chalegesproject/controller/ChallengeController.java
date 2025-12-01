@@ -105,8 +105,9 @@ import java.util.stream.Collectors;
 
         // --- POST יצירת אתגר חדש ---
         @PostMapping("/create")
-        public ResponseEntity<ChallengeDto> uploadChallengeWithImage(@RequestPart("image") MultipartFile file
-                ,@RequestPart("challenge") ChallengeDto c) {
+        public ResponseEntity<ChallengeDto> uploadChallengeWithImage(
+                @RequestPart(value = "image", required = false) MultipartFile file, // נכון: required=false
+                @RequestPart("challenge") ChallengeDto c) {
             try {
                 // 2. קבלת פרטי משתמש מחובר
                 Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
@@ -121,19 +122,27 @@ import java.util.stream.Collectors;
                 // 4. הגדרת ה-ID המאובטח
                 c.setUserId(user.getId());
 
-                // ... (המשך לוגיקת שמירת האתגר)
-                c.setImagePath(file.getOriginalFilename());//השם של התמונה
-                ImageUtils.saveImage(file);
+                // ⭐⭐ הלוגיקה הנכונה של טיפול בקובץ:
+                if (file != null && !file.isEmpty()) {
+                    // אם יש קובץ: שמור אותו ועדכן את הנתיב ב-DTO
+                    c.setImagePath(file.getOriginalFilename()); // השם של התמונה
+                    ImageUtils.saveImage(file);
+                } else {
+                    // אם אין קובץ: נתיב התמונה מוגדר ל-null
+                    c.setImagePath(null);
+                }
+                // סוף בלוק הטיפול בקובץ. ממשיכים לשמירת האתגר.
 
+                // השורות המכשלות והמיותרות הוסרו מכאן
 
-                Challenge challenge=challengeRepository.save(challengeMapper.dtoToChallenges(c,user));
-                return new ResponseEntity<>(challengeMapper.challengeToDto(challenge),HttpStatus.CREATED);
+                Challenge challenge = challengeRepository.save(challengeMapper.dtoToChallenges(c, user));
+                return new ResponseEntity<>(challengeMapper.challengeToDto(challenge), HttpStatus.CREATED);
 
             } catch (IOException e) {
                 System.out.println(e);
-                return new ResponseEntity<>(null,HttpStatus.INTERNAL_SERVER_ERROR);
-            }}
-        // בתוך ChallengeController.java
+                return new ResponseEntity<>(null, HttpStatus.INTERNAL_SERVER_ERROR);
+            }
+        }
 
 
         // --- POST הצטרפות לאתגר (מאובטח באמצעות Token) ---
