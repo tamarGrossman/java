@@ -65,7 +65,7 @@ public interface ChallengeMapper {
     // 1. המרה הפוכה DTO -> Entity
     // =========================================================
     @Mapping(target = "id", source = "dto.id")
-    @Mapping(target = "picture", source = "dto.imagePath")
+    @Mapping(target = "picture", source = "dto.picture")  // ← שנה לזה!
     // ⭐⭐ תיקון קריטי: מיפוי אובייקט המשתמש ⭐⭐
     @Mapping(target = "user", source = "user")
 
@@ -80,6 +80,9 @@ public interface ChallengeMapper {
     // =========================================================
 
     // 2.1. המרה מלאה עם לייקים וכולי
+    // ChallengeMapper.java
+
+    // 2.1. המרה מלאה עם לייקים וכולי
     default ChallengeDto challengeToDto(Challenge challenge, @Context boolean isLiked) {
         if (challenge == null) {
             return null;
@@ -87,6 +90,7 @@ public interface ChallengeMapper {
 
         ChallengeDto dto = new ChallengeDto();
 
+        // ... (שדות רגילים: id, name, description, date, numOfDays, likes, user) ...
         dto.setId(challenge.getId());
         dto.setName(challenge.getName());
         dto.setDescription(challenge.getDescription());
@@ -103,14 +107,21 @@ public interface ChallengeMapper {
             dto.setUserName(challenge.getUser().getUsername());
         }
 
-        // תמונה (מושבתת)
+        // ⭐⭐⭐ התיקון הקריטי: טעינת התמונה מנתיב ל-Base64 ⭐⭐⭐
         if (challenge.getPicture() != null) {
             try {
-                // dto.setPicture(ImageUtils.getImage(challenge.getPicture()));
+                // ה-Entity (challenge) מכיל את שם הקובץ ב-challenge.getPicture()
+                String base64Image = ImageUtils.getImage(challenge.getPicture());
+
+                // ה-DTO שולח את ה-Base64 חזרה ל-Angular בשדה picture
+                dto.setPicture(base64Image);
+
             } catch (Exception e) {
-                // handle
+                System.err.println("Failed to load image for Challenge ID " + challenge.getId() + ": " + e.getMessage());
+                dto.setPicture(null); // אם נכשל, אל תשלח כלום
             }
         }
+        // ⭐⭐⭐ סוף תיקון טעינת תמונה ⭐⭐⭐
 
         return dto;
     }

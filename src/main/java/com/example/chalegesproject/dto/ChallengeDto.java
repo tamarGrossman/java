@@ -1,6 +1,5 @@
 package com.example.chalegesproject.dto;
 
-import javax.validation.constraints.Size;
 import java.time.LocalDate;
 import jakarta.validation.constraints.*;
 
@@ -9,7 +8,7 @@ public class ChallengeDto {
     private long id;
     private Long userId; // או long אם תמיד חייב להיות ערך
 //    @NotBlank(message = "שם האתגר הוא שדה חובה")
-    @Size(min = 5, max = 100, message = "שם האתגר חייב להיות בין 5 ל-100 תווים")
+//    @Size(min = 5, max = 100, message = "שם האתגר חייב להיות בין 5 ל-100 תווים")
     private String name;
     private String description;
     private LocalDate date;//תאריך העלאת האתגר
@@ -50,13 +49,11 @@ public class ChallengeDto {
 
 
 
-    public long getUserId() {
+    public Long getUserId() {
         return userId;
     }
 
-    public void setUserId(long userId) {
-        this.userId = userId;
-    }
+
 
     public long getId() {
         return id;

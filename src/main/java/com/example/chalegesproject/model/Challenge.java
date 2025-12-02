@@ -37,6 +37,9 @@ public class Challenge {
     public Challenge() {
     }
 
+
+
+
     public String getLikedByUserIds() {
         return likedByUserIds;
     }

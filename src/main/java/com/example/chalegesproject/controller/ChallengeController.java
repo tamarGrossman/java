@@ -180,6 +180,9 @@ import java.util.stream.Collectors;
             }
         }
         // --- POST יצירת אתגר חדש ---
+
+// ChallengeController.java
+
         @PostMapping("/create")
         public ResponseEntity<ChallengeDto> uploadChallengeWithImage(
                 @RequestPart(value = "image", required = false) MultipartFile file, // נכון: required=false
@@ -200,12 +203,13 @@ import java.util.stream.Collectors;
 
                 // ⭐⭐ הלוגיקה הנכונה של טיפול בקובץ:
                 if (file != null && !file.isEmpty()) {
-                    // אם יש קובץ: שמור אותו ועדכן את הנתיב ב-DTO
-                    c.setImagePath(file.getOriginalFilename()); // השם של התמונה
+                    String filename = file.getOriginalFilename();
+                    c.setImagePath(filename);           // לשמירה ב-DB (כבר יש)
+                    c.setPicture(filename);             // ← השורה שהייתה חסרה!!! חובה!!!
                     ImageUtils.saveImage(file);
                 } else {
-                    // אם אין קובץ: נתיב התמונה מוגדר ל-null
                     c.setImagePath(null);
+                    c.setPicture(null);                 // ← גם כאן
                 }
                 // סוף בלוק הטיפול בקובץ. ממשיכים לשמירת האתגר.
 
@@ -219,8 +223,6 @@ import java.util.stream.Collectors;
                 return new ResponseEntity<>(null, HttpStatus.INTERNAL_SERVER_ERROR);
             }
         }
-
-
         // --- POST הצטרפות לאתגר (מאובטח באמצעות Token) ---
         @PostMapping("/join/{challengeId}") // ⬅️ הנתיב מקבל רק את Challenge ID
         public ResponseEntity<?> joinChallenge(@PathVariable Long challengeId) {
@@ -415,7 +417,7 @@ import java.util.stream.Collectors;
                             "likeCount", currentLikeCount,
                             "message", "Creator cannot like own challenge"
                     );
-                    return ResponseEntity.status(HttpStatus.FORBIDDEN).body(body);
+                    return ResponseEntity.status(HttpStatus.CONFLICT).body(body);
                 }
 
                 boolean isUserJoined = joinerRepository.findByUserAndChallenge(user, challenge).isPresent();
@@ -464,7 +466,21 @@ import java.util.stream.Collectors;
                 return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(body);
             }
         }
+        @GetMapping("/popular")
+        public ResponseEntity<List<Challenge>> getPopularChallenges() {
+            List<Challenge> challenges = challengeRepository.findAll();
 
+            challenges.sort((c1, c2) -> {
+                int count1 = (c1.getLikedByUserIds() == null || c1.getLikedByUserIds().isEmpty()) ? 0 :
+                        c1.getLikedByUserIds().split(",").length;
+                int count2 = (c2.getLikedByUserIds() == null || c2.getLikedByUserIds().isEmpty()) ? 0 :
+                        c2.getLikedByUserIds().split(",").length;
+                return Integer.compare(count2, count1);
+            });
+
+            // ← אין כאן שום setLikeCount – לא נופל!
+            return ResponseEntity.ok(challenges.stream().limit(12).collect(Collectors.toList()));
+        }
     }
 
 

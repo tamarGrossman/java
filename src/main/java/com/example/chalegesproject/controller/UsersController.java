@@ -54,7 +54,6 @@ public class UsersController {
         return user.orElse(null); // או לזרוק Exception מותאם אישית
     }
 
-    // --- POST יצירת משתמש חדש ---
     @PostMapping("/signup")
     public ResponseEntity<?> signUp(HttpServletRequest request, @RequestBody Users user) {
 
@@ -62,34 +61,55 @@ public class UsersController {
         String jwt = jwtUtils.getJwtFromCookies(request);
 
         if (jwt != null && jwtUtils.validateJwtToken(jwt)) {
-            // אם קיים JWT תקף, המשתמש כבר מחובר
             String existingUsername = jwtUtils.getUserNameFromJwtToken(jwt);
-
-            // החזרת 403 Forbidden - כי המשתמש אינו מורשה לבצע רישום כשהוא מחובר
             return ResponseEntity
-                    .status(HttpStatus.FORBIDDEN) // <--- תיקון: 403 Forbidden
+                    .status(HttpStatus.FORBIDDEN) // 403 Forbidden
                     .body(existingUsername +
-                            " שגיאה: את/ה כבר מחובר/ת כמשתמש    ");
+                            " שגיאה: את/ה כבר מחובר/ת כמשתמש");
         }
 
         // 2. בדיקה האם שם המשתמש קיים במסד הנתונים
         Users u = usersRepository.findByUsername(user.getUsername());
         if (u != null) {
-            // החזרת 409 Conflict - כי יש קונפליקט עם משאב קיים
             return ResponseEntity
-                    .status(HttpStatus.CONFLICT) // <--- תיקון: 409 Conflict
+                    .status(HttpStatus.CONFLICT) // 409 Conflict
                     .body("שגיאה: שם המשתמש " + user.getUsername() + " כבר קיים במערכת!");
         }
 
+
         // 3. הצפנה ושמירה
-        String pass = user.getPassword();
+        String pass = user.getPassword(); // שמירת הסיסמה הלא מוצפנת
         user.setPassword(new BCryptPasswordEncoder().encode(pass));
-        Users savedUser = usersRepository.save(user);
+        Users savedUser = usersRepository.save(user); // שמירת המשתמש החדש
 
-        // החזרת שם המשתמש במקרה הצלחה
-        return ResponseEntity.status(HttpStatus.CREATED).body(savedUser.getUsername());
+        try {
+            // 4. יצירת אובייקט Authentication עבור המשתמש החדש, באמצעות הסיסמה הלא מוצפנת שנשמרה
+            Authentication authentication = authenticationManager
+                    .authenticate(new UsernamePasswordAuthenticationToken(savedUser.getUsername(), pass));
+
+            // 5. שמירת האובייקט ב-SecurityContext (כניסה למערכת)
+            SecurityContextHolder.getContext().setAuthentication(authentication);
+
+            // 6. יצירת עוגיית JWT
+            CustomUserDetails userDetails = (CustomUserDetails) authentication.getPrincipal();
+            ResponseCookie jwtCookie = jwtUtils.generateJwtCookie(userDetails);
+
+            // 7. החזרת התגובה עם העוגייה ב-Header (JWT Cookie)
+            return ResponseEntity.status(HttpStatus.CREATED)
+                    .header(HttpHeaders.SET_COOKIE, jwtCookie.toString())
+                    .body(userDetails.getUsername() + " נרשם וחובר בהצלחה!");
+
+        } catch (Exception e) {
+            // 🛑 **התיקון הקריטי:** הדפסת השגיאה ליומן השרת
+            System.err.println("❌ שגיאה בניסיון לחבר משתמש לאחר רישום: " + e.getMessage());
+            e.printStackTrace();
+
+            // 🛑 החזרת הודעה שמכילה את השגיאה, ללא עוגייה
+            return ResponseEntity.status(HttpStatus.CREATED)
+                    .body(savedUser.getUsername() +
+                            " נרשם בהצלחה, אך לא ניתן היה לחבר אוטומטית. (שגיאת אימות: " + e.getMessage() + ")");
+        }
     }
-
     @PostMapping("/signin")
     public ResponseEntity<?> signin(@RequestBody Users u) {
 
@@ -153,4 +173,6 @@ public class UsersController {
     }
     */
     }
+    // דוגמה ב-Java (User Controller)
+
     }

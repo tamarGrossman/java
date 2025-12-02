@@ -41,11 +41,13 @@ public static String getImage(String imagePath) {
         if (!Files.exists(uploadPath)) {
             Files.createDirectories(uploadPath);
         }
+        // בתוך saveImage:
+        System.out.println("✅ Saving file to: " + path.toAbsolutePath());
 
         // 2. 🌟 התיקון: העברת הקובץ שהועלה ישירות לנתיב החדש
         // (מחליף את הקריאה והכתיבה המוטעות שהיו קודם)
         file.transferTo(path.toFile());
-
+        System.out.println("🎉 File successfully saved!");
         return fileName;
     }
 }

@@ -59,7 +59,7 @@ public class WebSecurityConfig {
             //משבית את הגנת CSRF על ידי הפעלת שיטת `csrf()` והשבתתה
             http.csrf(csrf -> csrf.disable()).cors(cors -> cors.configurationSource(request -> {
                         CorsConfiguration corsConfiguration = new CorsConfiguration();
-                        corsConfiguration.setAllowedOrigins(List.of("http://localhost:5173", "http://localhost:4200","http://localhost:65278"));
+                        corsConfiguration.setAllowedOrigins(List.of("http://localhost:5173", "http://localhost:4200","http://localhost:65278","http://localhost:53796"));
                         corsConfiguration.setAllowedMethods(List.of("*"));
                         corsConfiguration.setAllowedHeaders(List.of("*"));
                         corsConfiguration.setAllowCredentials(true);
