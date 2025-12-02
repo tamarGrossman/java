@@ -2,7 +2,7 @@ package com.example.chalegesproject.dto;
 
 import javax.validation.constraints.Size;
 import java.time.LocalDate;
-import javax.validation.constraints.*;
+import jakarta.validation.constraints.*;
 
 
 public class ChallengeDto {
