@@ -14,6 +14,25 @@ import java.util.stream.Collectors;
 
 @Mapper(componentModel = "spring")
 public interface ChallengeMapper {
+    default List<ChallengeDto> challengeToDtoNoPicture(List<Challenge> challenges, Long currentUserId) {
+        if (challenges == null || challenges.isEmpty()) {
+            return Collections.emptyList();
+        }
+        return challenges.stream().map(challenge -> {
+            boolean isLiked = false;
+            if (currentUserId != null && challenge.getLikedByUserIds() != null && !challenge.getLikedByUserIds().trim().isEmpty()) {
+                String myId = String.valueOf(currentUserId);
+                isLiked = Arrays.stream(challenge.getLikedByUserIds().split(","))
+                        .map(String::trim)
+                        .filter(s -> !s.isEmpty())
+                        .anyMatch(s -> s.equals(myId));
+            }
+            ChallengeDto dto = challengeToDto(challenge, isLiked);
+            // הסרת התמונה (no picture)
+            dto.setPicture(null);
+            return dto;
+        }).collect(Collectors.toList());
+    }
     List<ChallengeDto> challengeToDtoNoPicture(List<Challenge> challenges);
     // מתודה נוחה להמרת רשימה של אתגרים ל-DTO בלי לייקים
     default List<ChallengeDto> toChallengesDTO(List<Challenge> challenges) {

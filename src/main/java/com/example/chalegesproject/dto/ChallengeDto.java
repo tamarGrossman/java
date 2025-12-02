@@ -8,7 +8,7 @@ import javax.validation.constraints.*;
 public class ChallengeDto {
     private long id;
     private Long userId; // או long אם תמיד חייב להיות ערך
-    @NotBlank(message = "שם האתגר הוא שדה חובה")
+//    @NotBlank(message = "שם האתגר הוא שדה חובה")
     @Size(min = 5, max = 100, message = "שם האתגר חייב להיות בין 5 ל-100 תווים")
     private String name;
     private String description;

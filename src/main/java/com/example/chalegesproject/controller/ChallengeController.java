@@ -7,6 +7,7 @@ import com.example.chalegesproject.model.Challenge;
 import com.example.chalegesproject.model.Joiner;
 import com.example.chalegesproject.model.Users;
 import com.example.chalegesproject.service.*;
+import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -378,83 +379,93 @@ import java.util.stream.Collectors;
             // -------------------------------------------------------------------------
 
         @PostMapping("/addLike/{challengeId}")
-        public ResponseEntity<Void> addLike(@PathVariable Long challengeId) {
-            Challenge challenge;
-
+        @Transactional
+        public ResponseEntity<Map<String, Object>> addLike(@PathVariable Long challengeId) {
             try {
-                // ⭐⭐ תיקון 1: בדיקה אמינה יותר למשתמש מחובר ⭐⭐
                 Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-
-                // אם אין אימות, או המשתמש הוא "anonymousUser" - תחזיר מייד 401
-                if (authentication == null || !authentication.isAuthenticated() ||
-                        "anonymousUser".equals(authentication.getPrincipal())) {
-                    return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build(); // 401
+                if (authentication == null || !authentication.isAuthenticated() || "anonymousUser".equals(authentication.getPrincipal())) {
+                    Map<String,Object> body = Map.of("liked", false, "likeCount", 0, "message", "Not authenticated");
+                    return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(body);
                 }
 
                 String username = authentication.getName();
                 Users user = usersRepository.findByUsername(username);
-
-                // אם המשתמש לא נמצא ב-DB למרות שיש לו טוקן - זה מוזר, נחזיר 401
                 if (user == null) {
-                    return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build(); // 401
+                    Map<String,Object> body = Map.of("liked", false, "likeCount", 0, "message", "User not found");
+                    return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(body);
                 }
 
-                // 3. שליפת האתגר
-                challenge = challengeRepository.findById(challengeId)
-                        .orElseThrow(() -> new NoSuchElementException("אתגר לא נמצא: ID " + challengeId));
+                Challenge challenge = challengeRepository.findById(challengeId)
+                        .orElseThrow(() -> new NoSuchElementException("Challenge not found: " + challengeId));
 
                 Long currentUserId = user.getId();
-                String userIdStr = currentUserId.toString();
 
-                // ⭐⭐ בדיקה 1: מניעת לייק עצמי ⭐⭐
-                if (challenge.getUser().getId().equals(currentUserId)) {
-                    // 400 Forbidden - אסור ליוצר האתגר לעשות לייק.
-                    return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
+                // מחשב את מספר הלייקים הנוכחי
+                int currentLikeCount =
+                        (challenge.getLikedByUserIds() == null || challenge.getLikedByUserIds().trim().isEmpty())
+                                ? 0
+                                : (int) Arrays.stream(challenge.getLikedByUserIds().split(","))
+                                .map(String::trim)
+                                .filter(s -> !s.isEmpty())
+                                .count();
+
+                if (challenge.getUser() != null && challenge.getUser().getId().equals(currentUserId)) {
+                    Map<String,Object> body = Map.of(
+                            "liked", false,
+                            "likeCount", currentLikeCount,
+                            "message", "Creator cannot like own challenge"
+                    );
+                    return ResponseEntity.status(HttpStatus.FORBIDDEN).body(body);
                 }
 
-                // ⭐⭐ בדיקה 2: רק מי שנרשם לאתגר יכול לעשות לייק ⭐⭐
-                // חובה: JoinerRepository חייב להכיל את המתודה findByUserAndChallenge
                 boolean isUserJoined = joinerRepository.findByUserAndChallenge(user, challenge).isPresent();
-
                 if (!isUserJoined) {
-                    // 403 Forbidden - המשתמש לא רשום לאתגר.
-                    return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+                    Map<String,Object> body = Map.of(
+                            "liked", false,
+                            "likeCount", currentLikeCount,
+                            "message", "User must join challenge to like"
+                    );
+                    return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(body);
                 }
 
-
-                // 4. פיצול המחרוזת ל-IDs והכנה ל-TOGGLE
-                String currentIdsString = challenge.getLikedByUserIds() != null ? challenge.getLikedByUserIds() : "";
-
-// מפרק את המחרוזת, מנקה רווחים מכל ID, ומסנן ID's ריקים.
-                Set<String> likedUsers = Arrays.stream(currentIdsString.split(","))
-                        .map(String::trim) // ⭐⭐⭐ התיקון: חותך רווחים ⭐⭐⭐
+                Set<String> likedUsers = Arrays.stream(
+                                Optional.ofNullable(challenge.getLikedByUserIds()).orElse("").split(","))
+                        .map(String::trim)
                         .filter(s -> !s.isEmpty())
-                        .collect(Collectors.toSet());
-                // 5. לוגיקת TOGGLE
+                        .collect(Collectors.toCollection(LinkedHashSet::new));
+
+                String userIdStr = String.valueOf(currentUserId);
+                boolean nowLiked;
+
                 if (likedUsers.contains(userIdStr)) {
-                    // אם המשתמש כבר נתן לייק - מוחקים (Unlike)
                     likedUsers.remove(userIdStr);
+                    nowLiked = false;
                 } else {
-                    // אם המשתמש לא נתן לייק - מוסיפים (Like)
                     likedUsers.add(userIdStr);
+                    nowLiked = true;
                 }
 
-                // 6. איחוד המערך חזרה למחרוזת ושמירה
                 String newLikedUserIds = String.join(",", likedUsers);
                 challenge.setLikedByUserIds(newLikedUserIds);
                 challengeRepository.save(challenge);
 
-                return ResponseEntity.ok().build();
+                Map<String,Object> body = new HashMap<>();
+                body.put("liked", nowLiked);
+                body.put("likeCount", likedUsers.size());
+                body.put("message", "OK");
+                return ResponseEntity.ok(body);
+
             } catch (NoSuchElementException e) {
-                // מטפל במקרה שהאתגר לא נמצא
-                return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
+                Map<String,Object> body = Map.of("liked", false, "likeCount", 0, "message", e.getMessage());
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(body);
             } catch (Exception e) {
-                System.out.println("Error toggling like: " + e.getMessage());
                 e.printStackTrace();
-                return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+                Map<String,Object> body = Map.of("liked", false, "likeCount", 0, "message", "Internal server error");
+                return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(body);
             }
         }
-        }
+
+    }
 
 
 
