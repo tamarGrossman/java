@@ -8,6 +8,7 @@ import com.example.chalegesproject.model.Joiner;
 import com.example.chalegesproject.model.Users;
 import com.example.chalegesproject.service.*;
 import jakarta.transaction.Transactional;
+import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -55,10 +56,9 @@ import java.util.stream.Collectors;
             try {
                 // שולפים את כל האתגרים
                 List<Challenge> challenges = challengeRepository.findAll();
-                // ממירים ל-DTO
 
-                // 💡 שינוי: קריאה למאפר עם הפרמטר החדש
-                List<ChallengeDto> challengeDtos = challengeMapper.challengeToDtoNoPicture(challenges); // ⬅️ שימוש במתודת הרשימה המינימלית
+                // המרה לdto על ידי המאפר
+                List<ChallengeDto> challengeDtos = challengeMapper.challengeToDtoNoPicture(challenges);
                 if (challengeDtos.isEmpty()) {
                     // אם אין אתגרים, מחזירים 204 No Content
                     return ResponseEntity.noContent().build();
@@ -73,49 +73,6 @@ import java.util.stream.Collectors;
                 return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
             }
         }
-        // --- GET אתגר ספציפי לפי ID ---
-// הנתיב הוא לדוגמה: /api/challenges/5
-//        @GetMapping("/getById{id}")
-//        public ResponseEntity<ChallengeDto> getChallengeById(@PathVariable Long id) {
-//            Challenge challenge;
-//            Long currentUserId = null;
-//
-//            try {
-//                // 1. שליפת האתגר
-//                challenge = challengeRepository.findById(id)
-//                        .orElseThrow(() -> new NoSuchElementException("Challenge not found"));
-//
-//                // 2. זיהוי המשתמש הנוכחי (מי מבקש את המידע?)
-//                // זו הלוגיקה העסקית, עכשיו היא פה:
-//                Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-//                if (auth != null && auth.isAuthenticated() && !auth.getPrincipal().equals("anonymousUser")) {
-//                    String username = auth.getName();
-//                    // ⭐⭐ יש להניח ש-UsersRepository מוזרק לפה
-//                    Users user = usersRepository.findByUsername(username);
-//                    if (user != null) {
-//                        currentUserId = user.getId();
-//                    }
-//                }
-//
-//                // 3. המרה ל-DTO עם בדיקת הלייק
-//                // קורא למתודה שהוספנו ב-Mapper ומעביר לה את ה-ID המחושב
-//                ChallengeDto dto = challengeMapper.challengeToDtoWithUserCheck(challenge, currentUserId);
-//
-//                // 4. החזרה
-//                return ResponseEntity.ok(dto);
-//
-//            } catch (NoSuchElementException e) {
-//                // טיפול במקרה שהאתגר לא נמצא
-//                return ResponseEntity.status(HttpStatus.NOT_FOUND).build(); // 404
-//            } catch (Exception e) {
-//                // טיפול בשגיאות כלליות (כמו בעיות ב-SecurityContextHolder אם יש)
-//                System.err.println("Error fetching challenge details: " + e.getMessage());
-//                e.printStackTrace();
-//                return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build(); // 500
-//            }
-//        }
-
-// בתוך ChallengeController.java
 
         @GetMapping("/getById{id}")
         public ResponseEntity<ChallengeDto> getChallengeById(@PathVariable Long id) {
@@ -135,7 +92,7 @@ import java.util.stream.Collectors;
                     }
                 }
 
-                // 3. לוגיקה קריטית - חישוב ה-isLiked
+                // .  חישוב ה-isLiked
                 boolean isLiked = false;
                 int realLikeCount = 0;
 
@@ -151,24 +108,15 @@ import java.util.stream.Collectors;
 
                     if (currentUserId != null) {
                         String myId = String.valueOf(currentUserId);
-                        // בדיקה מדויקת
                         if (ids.contains(myId)) {
                             isLiked = true;
                         }
                     }
 
-                    // הדפסת דיבאג לשרת (תסתכלי למטה בלוגים כשאת מריצה!)
-                    System.out.println("DEBUG CHECK: ChallengeID=" + id +
-                            " | UsersString=[" + likedIdsStr + "]" +
-                            " | MyID=" + currentUserId +
-                            " | Found? " + isLiked);
                 }
 
-                // 4. שימוש ב-Mapper (או יצירה ידנית אם המאפר עושה בעיות)
-                // אנחנו נכפה את הערכים שחישבנו עכשיו!
                 ChallengeDto dto = challengeMapper.challengeToDto(challenge, isLiked);
 
-                // דריסה ידנית ליתר ביטחון - כדי לוודא שהמאפר לא טועה
                 dto.setLikedByCurrentUser(isLiked);
                 dto.setLikeCount(realLikeCount);
 
@@ -180,13 +128,10 @@ import java.util.stream.Collectors;
             }
         }
         // --- POST יצירת אתגר חדש ---
-
-// ChallengeController.java
-
         @PostMapping("/create")
         public ResponseEntity<ChallengeDto> uploadChallengeWithImage(
-                @RequestPart(value = "image", required = false) MultipartFile file, // נכון: required=false
-                @RequestPart("challenge") ChallengeDto c) {
+                @RequestPart(value = "image", required = false) MultipartFile file,
+                @Valid @RequestPart("challenge") ChallengeDto c) {
             try {
                 // 2. קבלת פרטי משתמש מחובר
                 Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
@@ -201,19 +146,16 @@ import java.util.stream.Collectors;
                 // 4. הגדרת ה-ID המאובטח
                 c.setUserId(user.getId());
 
-                // ⭐⭐ הלוגיקה הנכונה של טיפול בקובץ:
+                //  טיפול בקובץ
                 if (file != null && !file.isEmpty()) {
                     String filename = file.getOriginalFilename();
-                    c.setImagePath(filename);           // לשמירה ב-DB (כבר יש)
-                    c.setPicture(filename);             // ← השורה שהייתה חסרה!!! חובה!!!
+                    c.setImagePath(filename);
+                    c.setPicture(filename);
                     ImageUtils.saveImage(file);
                 } else {
                     c.setImagePath(null);
-                    c.setPicture(null);                 // ← גם כאן
+                    c.setPicture(null);
                 }
-                // סוף בלוק הטיפול בקובץ. ממשיכים לשמירת האתגר.
-
-                // השורות המכשלות והמיותרות הוסרו מכאן
 
                 Challenge challenge = challengeRepository.save(challengeMapper.dtoToChallenges(c, user));
                 return new ResponseEntity<>(challengeMapper.challengeToDto(challenge,false), HttpStatus.CREATED);
@@ -224,34 +166,27 @@ import java.util.stream.Collectors;
             }
         }
         // --- POST הצטרפות לאתגר (מאובטח באמצעות Token) ---
-        @PostMapping("/join/{challengeId}") // ⬅️ הנתיב מקבל רק את Challenge ID
+        @PostMapping("/join/{challengeId}")
         public ResponseEntity<?> joinChallenge(@PathVariable Long challengeId) {
             try {
-                // 1. קבלת שם המשתמש מתוך ה-Token
                 Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
                 String username = authentication.getName();
 
-                // 2. מציאת אובייקט המשתמש המאומת
                 Users user = usersRepository.findByUsername(username);
 
-                // אם המשתמש המאומת לא נמצא ב-DB (מקרה נדיר לאחר אימות Token)
                 if (user == null) {
                     return ResponseEntity.status(HttpStatus.NOT_FOUND).body("User not found or session invalid.");
                 }
 
-                // 3. שליפת אובייקט האתגר
                 Challenge challenge = challengeRepository.findById(challengeId)
-                        // ⬅️ שימוש ב-NoSuchElementException במקום Exception כללי, נמנע משגיאה כמו
                         .orElseThrow(() -> new NoSuchElementException("אתגר לא נמצא: ID " + challengeId));
 
-                // 4. בדיקת כפילות
                 if (joinerRepository.findByUserAndChallenge(user, challenge).isPresent()) {
                     return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("המשתמש כבר הצטרף לאתגר זה.");
                 }
 
-                // 5. יצירת ושמירת אובייקט Joiner
                 Joiner joiner = new Joiner();
-                joiner.setUser(user); // ⬅️ שימוש באובייקט ה-user המאומת (בטוח)
+                joiner.setUser(user);
                 joiner.setChallenge(challenge);
                 joiner.setStartDate(LocalDate.now());
 
@@ -259,17 +194,13 @@ import java.util.stream.Collectors;
                 return ResponseEntity.status(HttpStatus.CREATED).body("הצטרפות לאתגר עברה בהצלחה");
 
             } catch (NoSuchElementException e) {
-                // טיפול בשגיאת "לא נמצא" (404)
                 return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
             } catch (Exception e) {
-                // טיפול בשאר שגיאות פנימיות
                 System.out.println("Error joining challenge: " + e.getMessage());
                 return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("שגיאה פנימית בשרת: " + e.getMessage());
             }
         }
         // --- GET שליפת כל האתגרים שמשתמש הצטרף אליהם ---
-        // בתוך com.example.chalegesproject.controller.ChallengeController.java
-
         @GetMapping("/joinedChallenges")
         public ResponseEntity<List<ChallengeDto>> getJoinedChallengesForUser() {
             try {
@@ -277,38 +208,29 @@ import java.util.stream.Collectors;
                 Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
                 String username = authentication.getName();
 
-                // 2. שליפת אובייקט המשתמש
                 Users user = usersRepository.findByUsername(username);
                 if (user == null) {
                     return new ResponseEntity<>(null, HttpStatus.UNAUTHORIZED);
                 }
 
-                // ⭐⭐ שלב 2.5: קבלת ID המשתמש המחובר לחישוב לייקים ⭐⭐
-                // אנחנו צריכים את ה-ID הזה כדי לבדוק את המחרוזת LikedByUserIds
                 Long currentUserId = user.getId();
 
-                // 3. שליפת כל רשומות ה-Joiner של המשתמש
+                //. שליפת כל רשומות ה-Joiner של המשתמש
                 List<Joiner> joiners = joinerRepository.findByUser(user);
 
-                // 4. הוצאת כל ה-Challenge ששייכים לרשומות Joiner
+                //  הוצאת כל ה-Challenge ששייכים לרשומות Joine
                 List<Challenge> challenges = joiners.stream()
                         .map(Joiner::getChallenge)
                         .collect(Collectors.toList());
 
-                // ⭐⭐ 5. המרת כל האתגרים ל-DTO עם לוגיקת isLiked ⭐⭐
-                // 💡 שינוי: במקום קריאה ישירה למאפר שלא עובדת, משתמשים ב-stream() כדי לעבור על כל פריט
-                // ולקרוא למאפר עם ה-boolean הנדרש.
                 List<ChallengeDto> challengeDtos = challenges.stream()
                         .map(challenge -> {
                             // חישוב האם המשתמש המחובר נתן לייק לאתגר הספציפי הזה
                             boolean isLiked = isLikedByUser(challenge, currentUserId);
-                            // קריאה למאפר המלאה עם הפרמטר הנדרש
                             return challengeMapper.challengeToDto(challenge, isLiked);
                         })
                         .collect(Collectors.toList());
 
-
-                // 6. החזרה
                 return ResponseEntity.ok(challengeDtos);
 
             } catch (Exception e) {
@@ -319,37 +241,34 @@ import java.util.stream.Collectors;
         @PostMapping(value = "/chat", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
         public Flux<ChatResponse> getResponseStream(@RequestBody ChatRequest chatRequest){
 
-            // ✅ עדכון 2: קריאה למתודה החדשה ב-Service
             return aiChatService.getResponseStream(chatRequest.message(), chatRequest.conversationId());
         }
-        // --- GET אתגרים שהמשתמש העלה (יצר בעצמו) ---
-        // בתוך ChallengeController.java
 
         // --- GET אתגרים שהמשתמש המחובר יצר (העלה) ---
-        @GetMapping("/uploadedBy") // הנתיב לא כולל ID
+        @GetMapping("/uploadedBy")
         public ResponseEntity<List<ChallengeDto>> getMyCreatedChallenges() {
             try {
-                // 1. קבלת פרטי משתמש מחובר (בדיקה ש-Token קיים ותקין)
-                Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-                String username = authentication.getName(); // שם המשתמש מתוך ה-Token/JWT
 
-                // 2. מציאת אובייקט המשתמש (לפי שם משתמש שחולץ מה-JWT)
+                Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+                String username = authentication.getName();
+
+
                 Users user = usersRepository.findByUsername(username);
 
-                // 3. בדיקת אבטחה קריטית: אם המשתמש לא נמצא (למרות שה-Token קיים)
+
                 if (user == null) {
-                    // זהו אירוע חריג (Token תקין אך משתמש נמחק) - מחזירים 401
+
                     return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
                 }
 
-                // 4. שליפת כל האתגרים שנוצרו על ידי המשתמש הזה
-                // (שימוש ב-challengeRepository.findByUser, כפי שהוספנו)
+                //  שליפת כל האתגרים שנוצרו על ידי המשתמש הזה
+                //
                 List<Challenge> createdChallenges = challengeRepository.findByUser(user);
 
-                // 5. המרה ל-DTO
+
                 List<ChallengeDto> challengeDtos = challengeMapper.toChallengesDTO(createdChallenges);
 
-                // 6. החזרת התוצאה
+
                 if (challengeDtos.isEmpty()) {
                     // מחזיר 204 No Content אם המשתמש לא העלה כלום
                     return ResponseEntity.noContent().build();
@@ -363,7 +282,7 @@ import java.util.stream.Collectors;
             }}
 
 
-            // ⭐ פונקציית עזר ב-Controller לבדיקה האם המשתמש לחץ ⭐
+            // פונקציה לבדיקה האם המשץמש עשה לייק
              boolean isLikedByUser(Challenge challenge, Long currentUserId) {
                 if (challenge == null || challenge.getLikedByUserIds() == null || currentUserId == null) {
                     return false;
@@ -371,14 +290,12 @@ import java.util.stream.Collectors;
                 String userIdStr = currentUserId.toString();
                 String ids = challenge.getLikedByUserIds();
 
-                // יצירת Set מופרד בפסיקים ובדיקה מהירה
+
                 Set<String> likedUsers = new HashSet<>(Arrays.asList(ids.split(",")));
                 likedUsers.remove(""); // מנקה איברים ריקים במקרה של מחרוזת ריקה
                 return likedUsers.contains(userIdStr);
             }
-            // -------------------------------------------------------------------------
-            // ⭐⭐ POST: Toggle Like לאתגר (חדש!) ⭐⭐
-            // -------------------------------------------------------------------------
+
 
         @PostMapping("/addLike/{challengeId}")
         @Transactional
@@ -410,7 +327,7 @@ import java.util.stream.Collectors;
                                 .map(String::trim)
                                 .filter(s -> !s.isEmpty())
                                 .count();
-
+//מונע מהמשתמש לעשות לייק עצמי
                 if (challenge.getUser() != null && challenge.getUser().getId().equals(currentUserId)) {
                     Map<String,Object> body = Map.of(
                             "liked", false,
@@ -419,7 +336,7 @@ import java.util.stream.Collectors;
                     );
                     return ResponseEntity.status(HttpStatus.CONFLICT).body(body);
                 }
-
+//מונע ממשתמשים שלא מצורפים לאתגר
                 boolean isUserJoined = joinerRepository.findByUserAndChallenge(user, challenge).isPresent();
                 if (!isUserJoined) {
                     Map<String,Object> body = Map.of(
@@ -478,8 +395,8 @@ import java.util.stream.Collectors;
                 return Integer.compare(count2, count1);
             });
 
-            // ← אין כאן שום setLikeCount – לא נופל!
-            return ResponseEntity.ok(challenges.stream().limit(12).collect(Collectors.toList()));
+
+            return ResponseEntity.ok(challenges.stream().limit(7).collect(Collectors.toList()));
         }
     }
 

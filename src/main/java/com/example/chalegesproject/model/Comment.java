@@ -14,14 +14,14 @@ public class Comment {
     @GeneratedValue
     private long id;
     @ManyToOne
-    @JsonIgnoreProperties("challenges") // מונע קפיצה חזרה ל־Users
+    @JsonIgnoreProperties("challenges")
 
     private Users user;
     @ManyToOne
     private Challenge challenge;
     private String content;
     private String picture;
-    private LocalDate date;//תאריך פרסום התגובה
+    private LocalDate date;
 
 
     public Comment() {

@@ -6,6 +6,7 @@ import com.example.chalegesproject.model.Challenge;
 import com.example.chalegesproject.model.Comment;
 import com.example.chalegesproject.model.Users;
 import com.example.chalegesproject.service.*;
+import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
@@ -47,37 +48,33 @@ public class CommentController   {
         this.commentMapper = commentMapper;
     }
 
-// --- POST הוספת תגובה לאתגר (מאובטח באמצעות Token) ---
+// --- POST הוספת תגובה לאתגר
 @PostMapping(value = "/add/{challengeId}", consumes = "multipart/form-data")
 public ResponseEntity<?> addComment(
         @PathVariable Long challengeId,
-        @RequestPart("commentData") CommentDto commentDto,
+       @Valid @RequestPart("commentData") CommentDto commentDto,
         @RequestPart(value = "image", required = false) MultipartFile file) { // required = false זה נכון!
     try {
-        // 1. קבלת שם המשתמש מתוך ה-Token
+
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         String username = authentication.getName();
 
-        // 2. מציאת אובייקט המשתמש המאומת
+
         Users user = usersRepository.findByUsername(username);
         if (user == null) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body("User not found or session invalid.");
         }
 
-        // 3. שליפת אובייקט האתגר
+
         Challenge challenge = challengeRepository.findById(challengeId)
                 .orElseThrow(() -> new NoSuchElementException("אתגר לא נמצא: ID " + challengeId));
 
-        // ❌❌❌ שתי השורות הבאות הוסרו מכאן ❌❌❌
-        // commentDto.setImagePath(file.getOriginalFilename());
-        // ImageUtils.saveImage(file);
 
-        // ⭐⭐ בלוק הבדיקה נשאר והוא היחיד שאחראי על הטיפול בקובץ ⭐⭐
+
         if (file != null && !file.isEmpty()) {
-            commentDto.setImagePath(file.getOriginalFilename()); // השם של התמונה
+            commentDto.setImagePath(file.getOriginalFilename());
             ImageUtils.saveImage(file);
         } else {
-            // אם אין תמונה, מגדירים את הנתיב ל-null
             commentDto.setImagePath(null);
         }
 
@@ -94,16 +91,16 @@ public ResponseEntity<?> addComment(
 }
 
 
-@GetMapping("/getByChallenge/{challengeId}") // הכתובת תהיה למשל: /getAll/getByChallenge/5
+@GetMapping("/getByChallenge/{challengeId}")
 public ResponseEntity<List<CommentDto>> getCommentsByChallengeId(@PathVariable long challengeId) {
     try {
-        // 1. שליפת התגובות ששייכות אך ורק לאתגר הספציפי
+
         List<Comment> comments = commentRepository.findByChallengeId(challengeId);
 
-        // 2. המרה ל-DTO באמצעות המאפר שלך (כולל המרת התמונות ל-Base64)
+
         List<CommentDto> commentDtos = commentMapper.toCommentesDTO(comments);
 
-        // 3. בדיקה אם הרשימה ריקה והחזרת תשובה מתאימה
+
         if (commentDtos.isEmpty()) {
             return ResponseEntity.noContent().build();
         } else {
@@ -115,12 +112,8 @@ public ResponseEntity<List<CommentDto>> getCommentsByChallengeId(@PathVariable l
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
     }
 }
-// CommentController.java
 
-    // --- GET שליפת כל התגובות של משתמש ספציפי (מאובטח באמצעות Token/Cookie) ---
-
-    // CommentController.java
-
+//כל התגובותשהעלה משתמש מסוים
     @GetMapping("/my-comments") // ✅ אין יותר {userId} בנתיב
     public ResponseEntity<?> getMyComments() { // ✅ הפונקציה לא מקבלת פרמטרים מבחוץ
         try {
@@ -133,14 +126,10 @@ public ResponseEntity<List<CommentDto>> getCommentsByChallengeId(@PathVariable l
             if (authenticatedUser == null) {
                 return new ResponseEntity<>("User not authenticated.", HttpStatus.UNAUTHORIZED);
             }
-
-            // 2. שימוש ב-ID של המשתמש שמצאנו מהעוגייה
             Long realUserId = authenticatedUser.getId();
 
-            // 3. שליפת הנתונים
             List<Comment> comments = commentRepository.findByUser_Id(realUserId);
 
-            // 4. המרה ל-DTO
             List<CommentDto> commentDtos = commentMapper.toCommentesDTO(comments);
 
             if (commentDtos.isEmpty()) {

@@ -17,8 +17,8 @@ import java.util.List;
 
 public interface CommentMapper {
     List<CommentDto> toCommentesDTO(List<Comment> list);
-    // המרה מ-Entity ל-DTO עם טיפול בתמונה
-    default CommentDto commentToDto(Comment comment) throws IOException {
+
+   default CommentDto commentToDto(Comment comment) throws IOException {
         CommentDto dto = new CommentDto();
 
         dto.setId((long) comment.getId());
@@ -26,17 +26,15 @@ public interface CommentMapper {
         dto.setContent(comment.getContent());
         dto.setDate(comment.getDate());
         if (comment.getUser() != null) {
-            dto.setUserId(comment.getUser().getId()); // <--- השורה החשובה
+            dto.setUserId(comment.getUser().getId());
         }
         if (comment.getUser() != null) {
-            dto.setUsername(comment.getUser().getUsername());// <--- השורה החשובה
+            dto.setUsername(comment.getUser().getUsername());
         }
-        // ⬅️ התיקון החשוב: מיפוי ה-Challenge ID
         if (comment.getChallenge() != null) {
-            dto.setChallengeId(comment.getChallenge().getId()); // שולף את ה-ID מהאובייקט המקושר
+            dto.setChallengeId(comment.getChallenge().getId());
         }
         try {
-            // המרת התמונה לקובץ base64 כדי שנוכל לשלוח ל-Frontend
             if (comment.getPicture() != null) {
                 dto.setPicture(ImageUtils.getImage(comment.getPicture()));
             }
@@ -47,7 +45,6 @@ public interface CommentMapper {
         }
 
 
-    // המרה הפוכה מ-DTO ל-Entity כולל שמירת תמונה
     @Mapping(target="picture", source="imagePath")
     default Comment dtoToComment(CommentDto dto, Users user, Challenge challenge) throws IOException {
         Comment comment = new Comment();

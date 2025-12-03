@@ -6,18 +6,22 @@ import jakarta.validation.constraints.*;
 
 public class ChallengeDto {
     private long id;
-    private Long userId; // או long אם תמיד חייב להיות ערך
-//    @NotBlank(message = "שם האתגר הוא שדה חובה")
-//    @Size(min = 5, max = 100, message = "שם האתגר חייב להיות בין 5 ל-100 תווים")
+    private Long userId;
+ @NotBlank(message = "שם האתגר הוא שדה חובה")
+ @Size(min = 5, max = 100, message = "שם האתגר חייב להיות בין 5 ל-100 תווים")
     private String name;
+    @NotBlank(message = "תיאור האתגר הוא שדה חובה")
+    @Size(min = 10, max = 1000, message = "שם האתגר חייב להיות בין 10 ל-1000 תווים")
     private String description;
-    private LocalDate date;//תאריך העלאת האתגר
-    private int numOfDays;//משך האתגר בימים
-    private String picture;//התמונה בפורמט של base64
-    private String imagePath;//הנתיב של התמונה
+    private LocalDate date;
+    @NotBlank(message = "מספר הימים באתגר הוא שדה חובה")
+    @Size(min = 1, max = 60, message = "שם האתגר חייב להיות בין 1 ל-60 תווים")
+    private int numOfDays;
+    private String picture;
+    private String imagePath;
     private String userName;
-    private int likeCount; // מספר הלייקים הכולל
-    private boolean isLikedByCurrentUser; // האם המשתמש הנוכחי נתן לייק (true/false)
+    private int likeCount;
+    private boolean isLikedByCurrentUser;
 
     public boolean isLikedByCurrentUser() {
         return isLikedByCurrentUser;

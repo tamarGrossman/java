@@ -2,6 +2,9 @@ package com.example.chalegesproject.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
+import jakarta.validation.constraints.Email;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Size;
 
 import java.util.HashSet;
 import java.util.List;
@@ -12,8 +15,14 @@ public class Users {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+    @NotBlank(message = "חובה להכניס שם משתמש")
+    @Size(min = 1, max = 30, message = "אורך שם המשתמש חייב להיות בין 1 ל-30 תווים")
     private String username;
+    @NotBlank(message = "חובה להכניס כתובת מייל")
+    @Email
     private String email;
+    @NotBlank(message = "חובה להכניס סיסמא")
+    @Size(min = 4, max = 10, message = "אורך הסיסמא חייב להיות בין 4 ל-10 תווים")
     private String password;
     @ManyToMany
     private Set<Role> roles=new HashSet<>();

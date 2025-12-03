@@ -2,6 +2,8 @@ package com.example.chalegesproject.dto;
 
 import com.example.chalegesproject.model.Users;
 import jakarta.persistence.GeneratedValue;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Size;
 import org.apache.catalina.User;
 
 import java.time.LocalDate;
@@ -12,6 +14,7 @@ import java.time.LocalDate;
         private long id;
         private String username;
         private long userId;
+        @Size(min = 1, max = 500, message = "אורך התגובה חייב להיות בין 1 ל-500 תווים")
         private String content;
         private String picture;
         private LocalDate date;
