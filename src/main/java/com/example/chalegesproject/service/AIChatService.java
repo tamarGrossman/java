@@ -43,6 +43,7 @@ public class AIChatService {
         Flux<String> aiResponseFlux = chatClient.prompt().messages(messageList)
                 .stream()
                 .content();
+        // משתנה לאיסוף התגובה המלאה לצורך שמירת זיכרון
         StringBuilder finalResponseBuilder = new StringBuilder();
 
         //שמירת התגובה בזכרון

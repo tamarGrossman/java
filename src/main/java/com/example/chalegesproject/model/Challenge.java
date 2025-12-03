@@ -16,12 +16,12 @@ public class Challenge {
     @JsonIgnoreProperties("challenges") // מונע קפיצה חזרה ל־Users
     private Users user;
     private String name;
-    @Lob // ✅ האנוטציה הקריטית שמורה ל-DB לאחסן טקסט ארוך
+    @Lob
     @Column(columnDefinition = "TEXT")
     private String description;
-    private LocalDate date;//תאריך העלאת האתגר
-    private int numOfDays;//משך האתגר בימים
-    private String picture;//הנתיב של התמונה
+    private LocalDate date;
+    private int numOfDays;
+    private String picture;
     private String likedByUserIds = "";
 
     @OneToMany(mappedBy = "challenge")

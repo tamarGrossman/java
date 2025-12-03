@@ -8,6 +8,7 @@ import com.example.chalegesproject.security.jwt.JwtUtils;
 import com.example.chalegesproject.service.AIChatService;
 import com.example.chalegesproject.service.UsersRepository;
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
@@ -41,7 +42,7 @@ public class UsersController {
         this.jwtUtils = jwtUtils;
     }
 
-    // --- GET כל המשתמשים ---
+
     @GetMapping
     public List<Users> getAllUsers() {
         return usersRepository.findAll();
@@ -55,7 +56,7 @@ public class UsersController {
     }
 
     @PostMapping("/signup")
-    public ResponseEntity<?> signUp(HttpServletRequest request, @RequestBody Users user) {
+    public ResponseEntity<?> signUp(HttpServletRequest request, @Valid @RequestBody Users user) {
 
         // 1. בדיקה האם המשתמש כבר מחובר (באמצעות Cookie JWT)
         String jwt = jwtUtils.getJwtFromCookies(request);
@@ -68,7 +69,7 @@ public class UsersController {
                             " שגיאה: את/ה כבר מחובר/ת כמשתמש");
         }
 
-        // 2. בדיקה האם שם המשתמש קיים במסד הנתונים
+        //  בדיקה האם שם המשתמש קיים במסד הנתונים
         Users u = usersRepository.findByUsername(user.getUsername());
         if (u != null) {
             return ResponseEntity
@@ -77,13 +78,13 @@ public class UsersController {
         }
 
 
-        // 3. הצפנה ושמירה
-        String pass = user.getPassword(); // שמירת הסיסמה הלא מוצפנת
-        user.setPassword(new BCryptPasswordEncoder().encode(pass));
-        Users savedUser = usersRepository.save(user); // שמירת המשתמש החדש
+        //  הצפנה ושמירה
+        String pass = user.getPassword();
+        user.setPassword(new BCryptPasswordEncoder().encode(pass));      //הצפנת הסיסמא על ידי מחלקה מובנת
+        Users savedUser = usersRepository.save(user);
 
         try {
-            // 4. יצירת אובייקט Authentication עבור המשתמש החדש, באמצעות הסיסמה הלא מוצפנת שנשמרה
+            //  יצירת אובייקט Authentication עבור המשתמש החדש, באמצעות הסיסמה הלא מוצפנת שנשמרה
             Authentication authentication = authenticationManager
                     .authenticate(new UsernamePasswordAuthenticationToken(savedUser.getUsername(), pass));
 
@@ -100,20 +101,20 @@ public class UsersController {
                     .body(userDetails.getUsername() + " נרשם וחובר בהצלחה!");
 
         } catch (Exception e) {
-            // 🛑 **התיקון הקריטי:** הדפסת השגיאה ליומן השרת
-            System.err.println("❌ שגיאה בניסיון לחבר משתמש לאחר רישום: " + e.getMessage());
+
             e.printStackTrace();
 
-            // 🛑 החזרת הודעה שמכילה את השגיאה, ללא עוגייה
+
             return ResponseEntity.status(HttpStatus.CREATED)
                     .body(savedUser.getUsername() +
                             " נרשם בהצלחה, אך לא ניתן היה לחבר אוטומטית. (שגיאת אימות: " + e.getMessage() + ")");
         }
     }
-    @PostMapping("/signin")
-    public ResponseEntity<?> signin(@RequestBody Users u) {
 
-        // 1. בדיקה אם המשתמש כבר מחובר
+    @PostMapping("/signin")
+    public ResponseEntity<?> signin(@Valid @RequestBody Users u) {
+
+
         Authentication existingAuth = SecurityContextHolder.getContext().getAuthentication();
 
         // בודק אם קיים אימות והוא לא אנונימי (כלומר, מישהו כבר מחובר)
@@ -122,13 +123,13 @@ public class UsersController {
 
             // אם המשתמש המחובר כרגע הוא אותו משתמש שמנסה להתחבר שוב:
             if (existingAuth.getName().equals(u.getUsername())) {
-                // מחזירים סטטוס 200 OK עם הודעת "כבר מחובר"
+
                 return ResponseEntity.ok()
                         .body("אתה כבר מחובר כ-" + u.getUsername());
             }
         }
 
-        // 2. אם לא מחובר, ממשיכים בתהליך האימות הרגיל
+        //  אם לא מחובר, ממשיכים בתהליך האימות הרגיל
         Authentication authentication = authenticationManager
                 .authenticate(new UsernamePasswordAuthenticationToken(u.getUsername(), u.getPassword()));
 
@@ -146,14 +147,11 @@ public class UsersController {
         return ResponseEntity.ok().header(HttpHeaders.SET_COOKIE, cookie.toString())
                 .body("you've been signed out! ");
     }
-    // בתוך המחלקה UsersController
-// ...
-// ...
 
-    // --- GET סטטוס משתמש מחובר (נדרש לאנגולר) ---
+    // --- GET סטטוס משתמש מחובר  ---
     @GetMapping("/is-logged-in")
     public ResponseEntity<Boolean> getCurrentUserStatus() {
-        // 1. קבלת אובייקט האימות מה-SecurityContext
+
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
 
         // 2. בדיקה האם המשתמש מאומת ואינו משתמש "אנונימי" (כלומר, מחובר)
@@ -164,15 +162,8 @@ public class UsersController {
         // 3. החזרת true או false
         return ResponseEntity.ok(isAuthenticated);
 
-        // אם היית רוצה להחזיר את שם המשתמש:
-    /*
-    if (isAuthenticated) {
-        return ResponseEntity.ok(authentication.getName());
-    } else {
-        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(null);
+
     }
-    */
-    }
-    // דוגמה ב-Java (User Controller)
+
 
     }

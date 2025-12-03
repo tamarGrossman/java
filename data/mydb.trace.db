@@ -5435,3 +5435,37 @@ Caused by: org.h2.jdbc.JdbcSQLNonTransientConnectionException: The connection wa
 	at org.h2.message.DbException.getJdbcSQLException(DbException.java:690)
 	at org.h2.message.DbException.getJdbcSQLException(DbException.java:489)
 	... 16 more
+2025-12-03 16:12:03.387788+02:00 jdbc[45]: null
+org.h2.message.DbException: The connection was not closed by the application and is garbage collected [90018-232]
+	at org.h2.message.DbException.get(DbException.java:223)
+	at org.h2.message.DbException.get(DbException.java:199)
+	at org.h2.message.DbException.get(DbException.java:188)
+	at org.h2.jdbc.JdbcConnection.closeOld(JdbcConnection.java:217)
+	at org.h2.jdbc.JdbcConnection.<init>(JdbcConnection.java:134)
+	at org.h2.Driver.connect(Driver.java:59)
+	at com.zaxxer.hikari.util.DriverDataSource.getConnection(DriverDataSource.java:144)
+	at com.zaxxer.hikari.pool.PoolBase.newConnection(PoolBase.java:370)
+	at com.zaxxer.hikari.pool.PoolBase.newPoolEntry(PoolBase.java:207)
+	at com.zaxxer.hikari.pool.HikariPool.createPoolEntry(HikariPool.java:488)
+	at com.zaxxer.hikari.pool.HikariPool$PoolEntryCreator.call(HikariPool.java:752)
+	at com.zaxxer.hikari.pool.HikariPool$PoolEntryCreator.call(HikariPool.java:731)
+	at java.base/java.util.concurrent.FutureTask.run(FutureTask.java:328)
+	at java.base/java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1095)
+	at java.base/java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:619)
+	at java.base/java.lang.Thread.run(Thread.java:1447)
+Caused by: org.h2.jdbc.JdbcSQLNonTransientConnectionException: The connection was not closed by the application and is garbage collected [90018-232]
+	at org.h2.message.DbException.getJdbcSQLException(DbException.java:690)
+	at org.h2.message.DbException.getJdbcSQLException(DbException.java:489)
+	... 16 more
+2025-12-03 18:25:15.892229+02:00 jdbc[3]: exception
+org.h2.jdbc.JdbcSQLDataException: Value too long for column "PASSWORD CHARACTER VARYING(10)": "'$2a$10$ukDp61PfaRRkxee087nETucd5xJlen7PXvhXI2X39Y/uw6qxzfzNW' (60)"; SQL statement:
+INSERT INTO "PUBLIC"."USERS_COPY_3_0"("ID", "PASSWORD", "USERNAME", "EMAIL") OVERRIDING SYSTEM VALUE SELECT "ID", "PASSWORD", "USERNAME", "EMAIL" FROM "PUBLIC"."USERS" [22001-232]
+2025-12-03 19:24:44.225999+02:00 jdbc[3]: exception
+org.h2.jdbc.JdbcSQLDataException: Value too long for column "PASSWORD CHARACTER VARYING(10)": "'$2a$10$ukDp61PfaRRkxee087nETucd5xJlen7PXvhXI2X39Y/uw6qxzfzNW' (60)"; SQL statement:
+INSERT INTO "PUBLIC"."USERS_COPY_3_0"("ID", "PASSWORD", "USERNAME", "EMAIL") OVERRIDING SYSTEM VALUE SELECT "ID", "PASSWORD", "USERNAME", "EMAIL" FROM "PUBLIC"."USERS" [22001-232]
+2025-12-03 22:54:08.002584+02:00 jdbc[3]: exception
+org.h2.jdbc.JdbcSQLDataException: Value too long for column "PASSWORD CHARACTER VARYING(10)": "'$2a$10$ukDp61PfaRRkxee087nETucd5xJlen7PXvhXI2X39Y/uw6qxzfzNW' (60)"; SQL statement:
+INSERT INTO "PUBLIC"."USERS_COPY_3_0"("ID", "PASSWORD", "USERNAME", "EMAIL") OVERRIDING SYSTEM VALUE SELECT "ID", "PASSWORD", "USERNAME", "EMAIL" FROM "PUBLIC"."USERS" [22001-232]
+2025-12-03 22:55:07.915431+02:00 jdbc[3]: exception
+org.h2.jdbc.JdbcSQLDataException: Value too long for column "PASSWORD CHARACTER VARYING(10)": "'$2a$10$ukDp61PfaRRkxee087nETucd5xJlen7PXvhXI2X39Y/uw6qxzfzNW' (60)"; SQL statement:
+INSERT INTO "PUBLIC"."USERS_COPY_3_0"("ID", "PASSWORD", "USERNAME", "EMAIL") OVERRIDING SYSTEM VALUE SELECT "ID", "PASSWORD", "USERNAME", "EMAIL" FROM "PUBLIC"."USERS" [22001-232]

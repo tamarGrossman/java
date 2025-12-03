@@ -16,7 +16,7 @@ public class Joiner {
     private Long id;
 
     @ManyToOne
-    @JsonIgnoreProperties("challenges") // מונע קפיצה חזרה ל־Users
+    @JsonIgnoreProperties("challenges")
 
     private Users user;
     @ManyToOne

@@ -23,6 +23,7 @@ public class JoinerController {
     // --- GET כל הקשרים ---
     @GetMapping
     public List<Joiner> getAllJoiners() {
+
         return joinerRepository.findAll();
     }
 
