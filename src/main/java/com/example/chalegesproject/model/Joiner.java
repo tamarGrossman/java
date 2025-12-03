@@ -23,7 +23,7 @@ public class Joiner {
     private Challenge challenge;
 
     private LocalDate startDate;
-    private LocalDateTime endDate;
+    private LocalDate endDate;
 
     public Joiner() {
     }
@@ -60,11 +60,11 @@ public class Joiner {
         this.startDate = startDate;
     }
 
-    public LocalDateTime getEndDate() {
+    public LocalDate getEndDate() {
         return endDate;
     }
 
-    public void setEndDate(LocalDateTime endDate) {
+    public void setEndDate(LocalDate endDate) {
         this.endDate = endDate;
     }
 }
