@@ -18,7 +18,6 @@ public class Users {
     @NotBlank(message = "חובה להכניס שם משתמש")
     @Size(min = 1, max = 30, message = "אורך שם המשתמש חייב להיות בין 1 ל-30 תווים")
     private String username;
-    @NotBlank(message = "חובה להכניס כתובת מייל")
     @Email
     private String email;
     @NotBlank(message = "חובה להכניס סיסמא")
