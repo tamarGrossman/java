@@ -11,11 +11,11 @@ public class ChallengeDto {
  @Size(min = 5, max = 100, message = "שם האתגר חייב להיות בין 5 ל-100 תווים")
     private String name;
     @NotBlank(message = "תיאור האתגר הוא שדה חובה")
-    @Size(min = 10, max = 1000, message = "שם האתגר חייב להיות בין 10 ל-1000 תווים")
+    @Size(min = 10, max = 1000000, message = "שם האתגר חייב להיות בין 10 ל-1000 תווים")
     private String description;
     private LocalDate date;
-    @NotBlank(message = "מספר הימים באתגר הוא שדה חובה")
-    @Size(min = 1, max = 60, message = "שם האתגר חייב להיות בין 1 ל-60 תווים")
+    @Min(value = 1, message = "Challenge must be at least 1 day long")
+    @Max(value = 365, message = "Challenge cannot exceed 365 days")
     private int numOfDays;
     private String picture;
     private String imagePath;

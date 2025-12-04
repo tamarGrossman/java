@@ -21,7 +21,7 @@ public class Users {
     @Email
     private String email;
     @NotBlank(message = "חובה להכניס סיסמא")
-    @Size(min = 4, max = 10, message = "אורך הסיסמא חייב להיות בין 4 ל-10 תווים")
+    @Size(min = 3, max = 1000, message = "אורך הסיסמא חייב להיות בין 3 ל-10 תווים")
     private String password;
     @ManyToMany
     private Set<Role> roles=new HashSet<>();
