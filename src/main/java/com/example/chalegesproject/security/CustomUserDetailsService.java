@@ -30,10 +30,7 @@ public class CustomUserDetailsService implements UserDetailsService {
             throw new UsernameNotFoundException("user not found");
         //רשימה של הרשאות
         List<GrantedAuthority> grantedAuthorities=new ArrayList<>();
-//        for(Role role:user.getRoles())
-//        {
-////            grantedAuthorities.add(new SimpleGrantedAuthority(role.getName().name()));
-//        }
+
         grantedAuthorities.add(new SimpleGrantedAuthority("USER")); // אפשר לתת שם כלשהו
         return new CustomUserDetails(username,user.getPassword(),grantedAuthorities);//יוצר משתמש עבור האבטחה
     }
